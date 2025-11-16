@@ -138,3 +138,20 @@
 
 ---
 
+# 阶段 7：Markdown 链接跳转（内部 .md + 外部浏览器）
+
+日期：2025-11-16
+状态：已完成
+
+目标：
+- 支持在预览中点击 Markdown 链接：
+  - 内部 `.md` / `.markdown` 链接：在阅读器中打开对应本地 Markdown 文件。
+  - 其它 `http` / `https` 等外部链接：交给系统默认浏览器打开。
+- 在 MainWindow 中记录当前已打开的 Markdown 文件绝对路径，用于解析相对链接（例如 `../chapter/xxx.md`）。
+- 当链接指向的本地文件不存在时，给出友好的错误提示，而不是静默失败。
+
+涉及文件：
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
+- D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.h
+- D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.cpp

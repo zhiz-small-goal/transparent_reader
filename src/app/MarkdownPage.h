@@ -11,7 +11,7 @@ public:
     using QWebEnginePage::QWebEnginePage;
 
 signals:
-    // 内部 .md 链接点击，让 MainWindow 来处理
+    // 发现内部 .md 链接时，让 MainWindow 处理
     void openMarkdown(const QUrl &url);
 
 protected:

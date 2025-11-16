@@ -86,7 +86,7 @@ events:
       The output was:
       0
       閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-      鐢熸垚鍚姩鏃堕棿涓?2025/11/16 18:36:28銆?
+      鐢熸垚鍚姩鏃堕棿涓?2025/11/16 23:57:42銆?
       
       鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\4.1.2\\CompilerIdCXX\\CompilerIdCXX.vcxproj鈥?榛樿鐩爣)銆?
       PrepareForBuild:
@@ -115,7 +115,7 @@ events:
           0 涓鍛?
           0 涓敊璇?
       
-      宸茬敤鏃堕棿 00:00:00.33
+      宸茬敤鏃堕棿 00:00:00.36
       
       
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -1070,8 +1070,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-0wzn8n"
-      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-0wzn8n"
+      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-2xumx2"
+      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-2xumx2"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -1081,40 +1081,40 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-0wzn8n'
+        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-2xumx2'
         
-        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_136d5.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_b9825.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
         閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 18:36:28銆?
+        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 23:57:42銆?
         
-        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-0wzn8n\\cmTC_136d5.vcxproj鈥?榛樿鐩爣)銆?
+        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-2xumx2\\cmTC_b9825.vcxproj鈥?榛樿鐩爣)銆?
         PrepareForBuild:
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_136d5.dir\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_b9825.dir\\Debug\\鈥濄€?
           宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
-          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-0wzn8n\\Debug\\鈥濄€?
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_136d5.dir\\Debug\\cmTC_136d5.tlog\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-2xumx2\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_b9825.dir\\Debug\\cmTC_b9825.tlog\\鈥濄€?
         InitializeBuildStatus:
-          姝ｅ湪鍒涘缓鈥渃mTC_136d5.dir\\Debug\\cmTC_136d5.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
-          姝ｅ湪瀵光€渃mTC_136d5.dir\\Debug\\cmTC_136d5.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+          姝ｅ湪鍒涘缓鈥渃mTC_b9825.dir\\Debug\\cmTC_b9825.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_b9825.dir\\Debug\\cmTC_b9825.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
         ClCompile:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Fo"cmTC_136d5.dir\\Debug\\\\" /Fd"cmTC_136d5.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\pschange\\winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2\\mingw64\\share\\cmake-4.1\\Modules\\CMakeCXXCompilerABI.cpp"
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Fo"cmTC_b9825.dir\\Debug\\\\" /Fd"cmTC_b9825.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\pschange\\winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2\\mingw64\\share\\cmake-4.1\\Modules\\CMakeCXXCompilerABI.cpp"
           鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.44.35219 鐗?
           鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Fo"cmTC_136d5.dir\\Debug\\\\" /Fd"cmTC_136d5.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\pschange\\winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2\\mingw64\\share\\cmake-4.1\\Modules\\CMakeCXXCompilerABI.cpp"
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Fo"cmTC_b9825.dir\\Debug\\\\" /Fd"cmTC_b9825.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\pschange\\winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2\\mingw64\\share\\cmake-4.1\\Modules\\CMakeCXXCompilerABI.cpp"
           CMakeCXXCompilerABI.cpp
         Link:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-0wzn8n\\Debug\\cmTC_136d5.exe" /INCREMENTAL /ILK:"cmTC_136d5.dir\\Debug\\cmTC_136d5.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-0wzn8n/Debug/cmTC_136d5.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-0wzn8n/Debug/cmTC_136d5.lib" /MACHINE:X64  /machine:x64 cmTC_136d5.dir\\Debug\\CMakeCXXCompilerABI.obj
-          cmTC_136d5.vcxproj -> D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-0wzn8n\\Debug\\cmTC_136d5.exe
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-2xumx2\\Debug\\cmTC_b9825.exe" /INCREMENTAL /ILK:"cmTC_b9825.dir\\Debug\\cmTC_b9825.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-2xumx2/Debug/cmTC_b9825.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-2xumx2/Debug/cmTC_b9825.lib" /MACHINE:X64  /machine:x64 cmTC_b9825.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_b9825.vcxproj -> D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-2xumx2\\Debug\\cmTC_b9825.exe
         FinalizeBuildStatus:
-          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_136d5.dir\\Debug\\cmTC_136d5.tlog\\unsuccessfulbuild鈥濄€?
-          姝ｅ湪瀵光€渃mTC_136d5.dir\\Debug\\cmTC_136d5.tlog\\cmTC_136d5.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
-        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-0wzn8n\\cmTC_136d5.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_b9825.dir\\Debug\\cmTC_b9825.tlog\\unsuccessfulbuild鈥濄€?
+          姝ｅ湪瀵光€渃mTC_b9825.dir\\Debug\\cmTC_b9825.tlog\\cmTC_b9825.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-2xumx2\\cmTC_b9825.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
         
         宸叉垚鍔熺敓鎴愩€?
             0 涓鍛?
             0 涓敊璇?
         
-        宸茬敤鏃堕棿 00:00:00.31
+        宸茬敤鏃堕棿 00:00:00.36
         
       exitCode: 0
   -
@@ -1160,8 +1160,8 @@ events:
     checks:
       - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
     directories:
-      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-ssrnpq"
-      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-ssrnpq"
+      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-k08ivq"
+      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-k08ivq"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -1171,40 +1171,40 @@ events:
       variable: "CMAKE_HAVE_LIBC_PTHREAD"
       cached: true
       stdout: |
-        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-ssrnpq'
+        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-k08ivq'
         
-        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_51b0f.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_fd6a3.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
         閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 18:36:29銆?
+        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 23:57:43銆?
         
-        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\cmTC_51b0f.vcxproj鈥?榛樿鐩爣)銆?
+        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\cmTC_fd6a3.vcxproj鈥?榛樿鐩爣)銆?
         PrepareForBuild:
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_51b0f.dir\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_fd6a3.dir\\Debug\\鈥濄€?
           宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
-          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\Debug\\鈥濄€?
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_51b0f.dir\\Debug\\cmTC_51b0f.tlog\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_fd6a3.dir\\Debug\\cmTC_fd6a3.tlog\\鈥濄€?
         InitializeBuildStatus:
-          姝ｅ湪鍒涘缓鈥渃mTC_51b0f.dir\\Debug\\cmTC_51b0f.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
-          姝ｅ湪瀵光€渃mTC_51b0f.dir\\Debug\\cmTC_51b0f.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+          姝ｅ湪鍒涘缓鈥渃mTC_fd6a3.dir\\Debug\\cmTC_fd6a3.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_fd6a3.dir\\Debug\\cmTC_fd6a3.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
         ClCompile:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_51b0f.dir\\Debug\\\\" /Fd"cmTC_51b0f.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\src.cxx"
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_fd6a3.dir\\Debug\\\\" /Fd"cmTC_fd6a3.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\src.cxx"
           鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.44.35219 鐗?
           鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_51b0f.dir\\Debug\\\\" /Fd"cmTC_51b0f.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\src.cxx"
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_fd6a3.dir\\Debug\\\\" /Fd"cmTC_fd6a3.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\src.cxx"
           src.cxx
-        D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\src.cxx(1,10): error C1083: 鏃犳硶鎵撳紑鍖呮嫭鏂囦欢: 鈥減thread.h鈥? No such file or directory [D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\cmTC_51b0f.vcxproj]
-        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\cmTC_51b0f.vcxproj鈥?榛樿鐩爣)鐨勬搷浣?- 澶辫触銆?
+        D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\src.cxx(1,10): error C1083: 鏃犳硶鎵撳紑鍖呮嫭鏂囦欢: 鈥減thread.h鈥? No such file or directory [D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\cmTC_fd6a3.vcxproj]
+        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\cmTC_fd6a3.vcxproj鈥?榛樿鐩爣)鐨勬搷浣?- 澶辫触銆?
         
         鐢熸垚澶辫触銆?
         
-        鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\cmTC_51b0f.vcxproj鈥?榛樿鐩爣) (1) ->
+        鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\cmTC_fd6a3.vcxproj鈥?榛樿鐩爣) (1) ->
         (ClCompile 鐩爣) -> 
-          D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\src.cxx(1,10): error C1083: 鏃犳硶鎵撳紑鍖呮嫭鏂囦欢: 鈥減thread.h鈥? No such file or directory [D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ssrnpq\\cmTC_51b0f.vcxproj]
+          D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\src.cxx(1,10): error C1083: 鏃犳硶鎵撳紑鍖呮嫭鏂囦欢: 鈥減thread.h鈥? No such file or directory [D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-k08ivq\\cmTC_fd6a3.vcxproj]
         
             0 涓鍛?
             1 涓敊璇?
         
-        宸茬敤鏃堕棿 00:00:00.20
+        宸茬敤鏃堕棿 00:00:00.21
         
       exitCode: 1
   -
@@ -1221,8 +1221,8 @@ events:
     checks:
       - "Looking for pthread_create in pthreads"
     directories:
-      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-xca8si"
-      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-xca8si"
+      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-p6glig"
+      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-p6glig"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -1232,42 +1232,42 @@ events:
       variable: "CMAKE_HAVE_PTHREADS_CREATE"
       cached: true
       stdout: |
-        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-xca8si'
+        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-p6glig'
         
-        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_681b0.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_b4090.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
         閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 18:36:29銆?
+        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 23:57:43銆?
         
-        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\cmTC_681b0.vcxproj鈥?榛樿鐩爣)銆?
+        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\cmTC_b4090.vcxproj鈥?榛樿鐩爣)銆?
         PrepareForBuild:
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_681b0.dir\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_b4090.dir\\Debug\\鈥濄€?
           宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
-          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\Debug\\鈥濄€?
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_681b0.dir\\Debug\\cmTC_681b0.tlog\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_b4090.dir\\Debug\\cmTC_b4090.tlog\\鈥濄€?
         InitializeBuildStatus:
-          姝ｅ湪鍒涘缓鈥渃mTC_681b0.dir\\Debug\\cmTC_681b0.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
-          姝ｅ湪瀵光€渃mTC_681b0.dir\\Debug\\cmTC_681b0.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+          姝ｅ湪鍒涘缓鈥渃mTC_b4090.dir\\Debug\\cmTC_b4090.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_b4090.dir\\Debug\\cmTC_b4090.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
         ClCompile:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_681b0.dir\\Debug\\\\" /Fd"cmTC_681b0.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\CheckFunctionExists.cxx"
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_b4090.dir\\Debug\\\\" /Fd"cmTC_b4090.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\CheckFunctionExists.cxx"
           鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.44.35219 鐗?
           鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_681b0.dir\\Debug\\\\" /Fd"cmTC_681b0.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\CheckFunctionExists.cxx"
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_b4090.dir\\Debug\\\\" /Fd"cmTC_b4090.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\CheckFunctionExists.cxx"
           CheckFunctionExists.cxx
         Link:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\Debug\\cmTC_681b0.exe" /INCREMENTAL /ILK:"cmTC_681b0.dir\\Debug\\cmTC_681b0.ilk" /NOLOGO pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-xca8si/Debug/cmTC_681b0.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-xca8si/Debug/cmTC_681b0.lib" /MACHINE:X64  /machine:x64 cmTC_681b0.dir\\Debug\\CheckFunctionExists.obj
-        LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減threads.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\cmTC_681b0.vcxproj]
-        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\cmTC_681b0.vcxproj鈥?榛樿鐩爣)鐨勬搷浣?- 澶辫触銆?
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\Debug\\cmTC_b4090.exe" /INCREMENTAL /ILK:"cmTC_b4090.dir\\Debug\\cmTC_b4090.ilk" /NOLOGO pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-p6glig/Debug/cmTC_b4090.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-p6glig/Debug/cmTC_b4090.lib" /MACHINE:X64  /machine:x64 cmTC_b4090.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減threads.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\cmTC_b4090.vcxproj]
+        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\cmTC_b4090.vcxproj鈥?榛樿鐩爣)鐨勬搷浣?- 澶辫触銆?
         
         鐢熸垚澶辫触銆?
         
-        鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\cmTC_681b0.vcxproj鈥?榛樿鐩爣) (1) ->
+        鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\cmTC_b4090.vcxproj鈥?榛樿鐩爣) (1) ->
         (Link 鐩爣) -> 
-          LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減threads.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-xca8si\\cmTC_681b0.vcxproj]
+          LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減threads.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-p6glig\\cmTC_b4090.vcxproj]
         
             0 涓鍛?
             1 涓敊璇?
         
-        宸茬敤鏃堕棿 00:00:00.26
+        宸茬敤鏃堕棿 00:00:00.28
         
       exitCode: 1
   -
@@ -1284,8 +1284,8 @@ events:
     checks:
       - "Looking for pthread_create in pthread"
     directories:
-      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-s3lwzv"
-      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-s3lwzv"
+      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-tsfv9q"
+      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-tsfv9q"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -1295,42 +1295,42 @@ events:
       variable: "CMAKE_HAVE_PTHREAD_CREATE"
       cached: true
       stdout: |
-        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-s3lwzv'
+        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-tsfv9q'
         
-        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_cb0dd.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_4e92e.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
         閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 18:36:29銆?
+        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 23:57:43銆?
         
-        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\cmTC_cb0dd.vcxproj鈥?榛樿鐩爣)銆?
+        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\cmTC_4e92e.vcxproj鈥?榛樿鐩爣)銆?
         PrepareForBuild:
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_cb0dd.dir\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_4e92e.dir\\Debug\\鈥濄€?
           宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
-          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\Debug\\鈥濄€?
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_cb0dd.dir\\Debug\\cmTC_cb0dd.tlog\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_4e92e.dir\\Debug\\cmTC_4e92e.tlog\\鈥濄€?
         InitializeBuildStatus:
-          姝ｅ湪鍒涘缓鈥渃mTC_cb0dd.dir\\Debug\\cmTC_cb0dd.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
-          姝ｅ湪瀵光€渃mTC_cb0dd.dir\\Debug\\cmTC_cb0dd.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+          姝ｅ湪鍒涘缓鈥渃mTC_4e92e.dir\\Debug\\cmTC_4e92e.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_4e92e.dir\\Debug\\cmTC_4e92e.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
         ClCompile:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_cb0dd.dir\\Debug\\\\" /Fd"cmTC_cb0dd.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\CheckFunctionExists.cxx"
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_4e92e.dir\\Debug\\\\" /Fd"cmTC_4e92e.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\CheckFunctionExists.cxx"
           鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.44.35219 鐗?
           鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_cb0dd.dir\\Debug\\\\" /Fd"cmTC_cb0dd.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\CheckFunctionExists.cxx"
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_4e92e.dir\\Debug\\\\" /Fd"cmTC_4e92e.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\CheckFunctionExists.cxx"
           CheckFunctionExists.cxx
         Link:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\Debug\\cmTC_cb0dd.exe" /INCREMENTAL /ILK:"cmTC_cb0dd.dir\\Debug\\cmTC_cb0dd.ilk" /NOLOGO pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-s3lwzv/Debug/cmTC_cb0dd.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-s3lwzv/Debug/cmTC_cb0dd.lib" /MACHINE:X64  /machine:x64 cmTC_cb0dd.dir\\Debug\\CheckFunctionExists.obj
-        LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減thread.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\cmTC_cb0dd.vcxproj]
-        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\cmTC_cb0dd.vcxproj鈥?榛樿鐩爣)鐨勬搷浣?- 澶辫触銆?
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\Debug\\cmTC_4e92e.exe" /INCREMENTAL /ILK:"cmTC_4e92e.dir\\Debug\\cmTC_4e92e.ilk" /NOLOGO pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-tsfv9q/Debug/cmTC_4e92e.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-tsfv9q/Debug/cmTC_4e92e.lib" /MACHINE:X64  /machine:x64 cmTC_4e92e.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減thread.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\cmTC_4e92e.vcxproj]
+        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\cmTC_4e92e.vcxproj鈥?榛樿鐩爣)鐨勬搷浣?- 澶辫触銆?
         
         鐢熸垚澶辫触銆?
         
-        鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\cmTC_cb0dd.vcxproj鈥?榛樿鐩爣) (1) ->
+        鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\cmTC_4e92e.vcxproj鈥?榛樿鐩爣) (1) ->
         (Link 鐩爣) -> 
-          LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減thread.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-s3lwzv\\cmTC_cb0dd.vcxproj]
+          LINK : fatal error LNK1104: 鏃犳硶鎵撳紑鏂囦欢鈥減thread.lib鈥?[D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tsfv9q\\cmTC_4e92e.vcxproj]
         
             0 涓鍛?
             1 涓敊璇?
         
-        宸茬敤鏃堕棿 00:00:00.26
+        宸茬敤鏃堕棿 00:00:00.28
         
       exitCode: 1
   -
@@ -1348,8 +1348,8 @@ events:
     checks:
       - "Performing Test HAVE_STDATOMIC"
     directories:
-      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-9pxv5b"
-      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-9pxv5b"
+      source: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-fh0t2f"
+      binary: "D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-fh0t2f"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -1359,40 +1359,40 @@ events:
       variable: "HAVE_STDATOMIC"
       cached: true
       stdout: |
-        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-9pxv5b'
+        Change Dir: 'D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-fh0t2f'
         
-        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_311ae.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        Run Build Command(s): "D:/kaifa visual/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_89dd4.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
         閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 18:36:30銆?
+        鐢熸垚鍚姩鏃堕棿涓?2025/11/16 23:57:44銆?
         
-        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-9pxv5b\\cmTC_311ae.vcxproj鈥?榛樿鐩爣)銆?
+        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fh0t2f\\cmTC_89dd4.vcxproj鈥?榛樿鐩爣)銆?
         PrepareForBuild:
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_311ae.dir\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_89dd4.dir\\Debug\\鈥濄€?
           宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
-          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-9pxv5b\\Debug\\鈥濄€?
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_311ae.dir\\Debug\\cmTC_311ae.tlog\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fh0t2f\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_89dd4.dir\\Debug\\cmTC_89dd4.tlog\\鈥濄€?
         InitializeBuildStatus:
-          姝ｅ湪鍒涘缓鈥渃mTC_311ae.dir\\Debug\\cmTC_311ae.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
-          姝ｅ湪瀵光€渃mTC_311ae.dir\\Debug\\cmTC_311ae.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+          姝ｅ湪鍒涘缓鈥渃mTC_89dd4.dir\\Debug\\cmTC_89dd4.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_89dd4.dir\\Debug\\cmTC_89dd4.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
         ClCompile:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_STDATOMIC /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_311ae.dir\\Debug\\\\" /Fd"cmTC_311ae.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-9pxv5b\\src.cxx"
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_STDATOMIC /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_89dd4.dir\\Debug\\\\" /Fd"cmTC_89dd4.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fh0t2f\\src.cxx"
           鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.44.35219 鐗?
           鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
-          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_STDATOMIC /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_311ae.dir\\Debug\\\\" /Fd"cmTC_311ae.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-9pxv5b\\src.cxx"
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_STDATOMIC /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /std:c++17 /Fo"cmTC_89dd4.dir\\Debug\\\\" /Fd"cmTC_89dd4.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fh0t2f\\src.cxx"
           src.cxx
         Link:
-          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-9pxv5b\\Debug\\cmTC_311ae.exe" /INCREMENTAL /ILK:"cmTC_311ae.dir\\Debug\\cmTC_311ae.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-9pxv5b/Debug/cmTC_311ae.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-9pxv5b/Debug/cmTC_311ae.lib" /MACHINE:X64  /machine:x64 cmTC_311ae.dir\\Debug\\src.obj
-          cmTC_311ae.vcxproj -> D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-9pxv5b\\Debug\\cmTC_311ae.exe
+          D:\\kaifa visual\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fh0t2f\\Debug\\cmTC_89dd4.exe" /INCREMENTAL /ILK:"cmTC_89dd4.dir\\Debug\\cmTC_89dd4.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-fh0t2f/Debug/cmTC_89dd4.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/zhiz-c++/transparent_reader/build/CMakeFiles/CMakeScratch/TryCompile-fh0t2f/Debug/cmTC_89dd4.lib" /MACHINE:X64  /machine:x64 cmTC_89dd4.dir\\Debug\\src.obj
+          cmTC_89dd4.vcxproj -> D:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fh0t2f\\Debug\\cmTC_89dd4.exe
         FinalizeBuildStatus:
-          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_311ae.dir\\Debug\\cmTC_311ae.tlog\\unsuccessfulbuild鈥濄€?
-          姝ｅ湪瀵光€渃mTC_311ae.dir\\Debug\\cmTC_311ae.tlog\\cmTC_311ae.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
-        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-9pxv5b\\cmTC_311ae.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_89dd4.dir\\Debug\\cmTC_89dd4.tlog\\unsuccessfulbuild鈥濄€?
+          姝ｅ湪瀵光€渃mTC_89dd4.dir\\Debug\\cmTC_89dd4.tlog\\cmTC_89dd4.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+        宸插畬鎴愮敓鎴愰」鐩€淒:\\zhiz-c++\\transparent_reader\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fh0t2f\\cmTC_89dd4.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
         
         宸叉垚鍔熺敓鎴愩€?
             0 涓鍛?
             0 涓敊璇?
         
-        宸茬敤鏃堕棿 00:00:00.36
+        宸茬敤鏃堕棿 00:00:00.37
         
       exitCode: 0
   -

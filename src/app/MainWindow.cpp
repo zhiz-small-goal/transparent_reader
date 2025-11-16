@@ -21,6 +21,8 @@
 #include <QWebEngineView>
 #include <QWidget>
 #include <QRegularExpression>
+#include <QDesktopServices>
+
 
 
 // ================= 工具函数：找 index.html & 占位 HTML =================
@@ -299,12 +301,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // WebEngine 区域
     m_view = new QWebEngineView(central);
-    auto *page = new MarkdownPage(m_view);      // ✅ 使用自定义 QWebEnginePage
-    m_view->setPage(page);
     layout->addWidget(m_view, 1);
 
-    // 连接内部 Markdown 链接信号
-    connect(page, &MarkdownPage::openMarkdown,
+    // 直接监听 urlChanged：每次页面导航到新 URL 时处理链接
+    connect(m_view, &QWebEngineView::urlChanged,
             this, &MainWindow::handleOpenMarkdownUrl);
 
 
@@ -374,43 +374,74 @@ void MainWindow::openMarkdownFileFromDialog()
 }
 void MainWindow::handleOpenMarkdownUrl(const QUrl &url)
 {
-    // 如果当前还没有打开任何 md，就没法解析相对路径
+    // 还没有打开任何 md，没法做内部跳转
     if (m_currentFilePath.isEmpty()) {
         return;
     }
 
-    QFileInfo currentFi(m_currentFilePath);
-    QDir      baseDir(currentFi.absolutePath());
+    // 1) 如果只是重新加载当前文件（openMarkdownFile 自己触发的），直接忽略
+    if (url.isLocalFile()) {
+        const QString u = QFileInfo(url.toLocalFile()).canonicalFilePath();
+        const QString cur = QFileInfo(m_currentFilePath).canonicalFilePath();
+        if (!u.isEmpty() && !cur.isEmpty() && u == cur) {
+            return;
+        }
+    }
 
-    QString localPath;
+    const QString scheme = url.scheme().toLower();
+    const QString path   = url.path();
 
-    if (url.isRelative()) {
-        // 相对路径：基于当前 md 文件所在目录
-        localPath = baseDir.absoluteFilePath(url.path());
-    } else if (url.isLocalFile()) {
-        // file:// 本地路径
-        localPath = url.toLocalFile();
+    // 2) 外部 http(s) 链接：交给系统浏览器，然后恢复当前 md
+    if (scheme == QStringLiteral("http")
+        || scheme == QStringLiteral("https")) {
+
+        QDesktopServices::openUrl(url);
+
+        // 回到当前文档（防止 WebEngine 自己留在外部网页上）
+        if (!m_currentFilePath.isEmpty()) {
+            openMarkdownFile(m_currentFilePath);
+        }
+        return;
+    }
+
+    // 3) 内部 Markdown 链接（相对或本地 file://）
+    auto isMdPath = [](const QString &p) {
+        const QString lower = p.toLower();
+        return lower.endsWith(".md") || lower.endsWith(".markdown");
+    };
+
+    QString targetPath;
+
+    if (url.isRelative() && isMdPath(path)) {
+        // 3.1 相对路径：基于当前 md 所在目录解析
+        QFileInfo curFi(m_currentFilePath);
+        QDir      baseDir(curFi.absolutePath());
+        targetPath = baseDir.absoluteFilePath(path);
+    } else if (url.isLocalFile() && isMdPath(url.toLocalFile())) {
+        // 3.2 file:// 本地绝对路径
+        targetPath = url.toLocalFile();
     } else {
-        // 正常不会走到这里：外部链接已经在 MarkdownPage 里交给系统浏览器了
+        // 其它情况（锚点、非 md、本地 html 等）先交给默认行为
         return;
     }
 
-    if (localPath.isEmpty()) {
+    if (targetPath.isEmpty()) {
         return;
     }
 
-    QFileInfo fi(localPath);
+    QFileInfo fi(targetPath);
     if (!fi.exists()) {
         QMessageBox::warning(
             this,
             QStringLiteral("打开失败"),
             QStringLiteral("找不到链接指向的 Markdown 文件：\n%1")
-                .arg(localPath));
+                .arg(targetPath));
         return;
     }
 
     openMarkdownFile(fi.absoluteFilePath());
 }
+
 
 
 
