@@ -1,4 +1,5 @@
 import sys
+import re
 from pathlib import Path
 from datetime import date
 
@@ -19,7 +20,9 @@ from tkinter import (
     Button,
     Scrollbar,
     messagebox,
+    Toplevel,
 )
+
 try:
     # 需要先 pip install tkinterdnd2
     from tkinterdnd2 import TkinterDnD, DND_FILES
@@ -28,16 +31,61 @@ except ImportError:
     sys.exit(1)
 
 
+def get_project_root() -> Path:
+    """项目根目录（脚本所在目录）"""
+    return Path(__file__).resolve().parent
+
+
+def get_stage_file() -> Path:
+    """返回 STAGE_PLAN.md 的路径（ai/STAGE_PLAN.md）"""
+    project_root = get_project_root()
+    ai_dir = project_root / "ai"
+    return ai_dir / "STAGE_PLAN.md"
+
+
+def detect_next_stage_no() -> str:
+    """
+    启动时自动检测 STAGE_PLAN.md 中最后一个“阶段 X”，
+    返回“下一个编号”的字符串。
+    例如最后是 阶段 30 -> 返回 "31"。
+    如果文件不存在或没有匹配行，就从 "0" 开始。
+    """
+    stage_file = get_stage_file()
+    if not stage_file.exists():
+        return "0"
+
+    pattern = re.compile(r"^##\s*阶段\s+(\d+)\s*：")
+    last_no: int | None = None
+
+    try:
+        with stage_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                m = pattern.match(line)
+                if m:
+                    try:
+                        num = int(m.group(1))
+                    except ValueError:
+                        continue
+                    last_no = num
+    except Exception:
+        # 读取失败就保守从 0 开始
+        return "0"
+
+    if last_no is None:
+        return "0"
+    return str(last_no + 1)
+
+
 def append_stage_plan(stage_no: str,
                       stage_title: str,
                       status: str,
                       goals: list[str],
-                      files: list[str]) -> Path:
+                      files: list[str]) -> tuple[Path, str]:
     """
     把一条阶段记录追加到 ai/STAGE_PLAN.md。
-    返回文件路径。
+    返回 (文件路径, 本次追加的文本内容)。
     """
-    project_root = Path(__file__).resolve().parent
+    project_root = get_project_root()
     ai_dir = project_root / "ai"
     ai_dir.mkdir(exist_ok=True)
 
@@ -78,23 +126,60 @@ def append_stage_plan(stage_no: str,
             f.write("\n---\n\n")
             f.write(section_text)
 
-    return stage_file
+    return stage_file, section_text
+
+
+def show_toast(root: Tk, text: str, duration_ms: int = 500) -> None:
+    """右下角弹出一个小提示，duration_ms 毫秒后自动消失。"""
+    toast = Toplevel(root)
+    toast.overrideredirect(True)  # 去掉窗口边框
+    toast.attributes("-topmost", True)
+
+    label = Label(
+        toast,
+        text=text,
+        bg="#333333",
+        fg="white",
+        padx=10,
+        pady=5,
+    )
+    label.pack()
+
+    # 先刷新一下尺寸信息
+    root.update_idletasks()
+    toast.update_idletasks()
+
+    root_x = root.winfo_rootx()
+    root_y = root.winfo_rooty()
+    root_w = root.winfo_width()
+    root_h = root.winfo_height()
+
+    toast_w = toast.winfo_reqwidth()
+    toast_h = toast.winfo_reqheight()
+
+    x = root_x + root_w - toast_w - 20
+    y = root_y + root_h - toast_h - 20
+    toast.geometry(f"+{x}+{y}")
+
+    toast.after(duration_ms, toast.destroy)
 
 
 def main() -> None:
     # 用 TkinterDnD.Tk 支持拖拽文件
     root = TkinterDnD.Tk()
     root.title("STAGE_PLAN 生成器")
-    # 默认窗口大小：宽 700，高 520，可根据喜好改
     root.geometry("700x520")
 
     # ===== 上半部分：基本信息 =====
     top_frame = Frame(root)
     top_frame.pack(fill=X, padx=10, pady=10)
 
+    # 启动时自动检测下一个阶段编号
+    auto_stage_no = detect_next_stage_no()
+
     # 阶段编号
     Label(top_frame, text="阶段编号：").grid(row=0, column=0, sticky="w")
-    stage_no_var = StringVar(value="0")
+    stage_no_var = StringVar(value=auto_stage_no)
     stage_no_entry = Entry(top_frame, textvariable=stage_no_var, width=10)
     stage_no_entry.grid(row=0, column=1, sticky="w", padx=(0, 20))
 
@@ -119,7 +204,6 @@ def main() -> None:
     goals_text = Text(goals_frame, height=8)
     goals_text.pack(fill=BOTH, expand=True)
 
-    # 给一点示例提示（你可以随便改/删）
     goals_text.insert(
         "1.0",
         "例如：\n"
@@ -147,7 +231,6 @@ def main() -> None:
     files_listbox.drop_target_register(DND_FILES)
 
     def on_drop(event):
-        # event.data 是字符串，用 tk.splitlist 解析出多个路径
         paths = event.widget.tk.splitlist(event.data)
         for p in paths:
             p = p.strip()
@@ -156,13 +239,12 @@ def main() -> None:
 
     files_listbox.dnd_bind("<<Drop>>", on_drop)
 
-    # 删除选中项按钮
+    # 删除/清空按钮
     btn_frame = Frame(files_frame)
     btn_frame.pack(fill=X, pady=(5, 0))
 
     def remove_selected():
         selection = list(files_listbox.curselection())
-        # 从后往前删，避免索引变化
         for idx in reversed(selection):
             files_listbox.delete(idx)
 
@@ -181,15 +263,13 @@ def main() -> None:
         stage_title = stage_title_var.get().strip() or "未命名阶段"
         status = status_var.get().strip() or "进行中"
 
-        # 目标：按行分割，去掉空行
         raw_goals = goals_text.get("1.0", END).splitlines()
         goals = [g.strip() for g in raw_goals if g.strip()]
 
-        # 涉及文件：取 Listbox 里的所有项
         files = list(files_listbox.get(0, END))
 
         try:
-            stage_path = append_stage_plan(
+            stage_path, section_text = append_stage_plan(
                 stage_no=stage_no,
                 stage_title=stage_title,
                 status=status,
@@ -200,10 +280,27 @@ def main() -> None:
             messagebox.showerror("写入失败", f"写入 STAGE_PLAN.md 失败：\n{e}")
             return
 
-        messagebox.showinfo(
-            "完成",
-            f"已写入阶段记录到：\n{stage_path}",
+        # 复制到剪贴板
+        try:
+            root.clipboard_clear()
+            root.clipboard_append(section_text)
+        except Exception:
+            pass
+
+        # 自动消失的小提示
+        show_toast(
+            root,
+            f"已写入：{stage_path.name}\n内容已复制到剪贴板",
+            duration_ms=500,
         )
+
+        # 生成后，自动把阶段编号 +1，方便继续下一阶段
+        try:
+            current_no = int(stage_no)
+            stage_no_var.set(str(current_no + 1))
+        except ValueError:
+            # 如果当前不是纯数字，就先不自动加
+            pass
 
     Button(bottom_frame, text="生成 / 追加到 STAGE_PLAN.md", command=on_generate).pack(
         side=RIGHT

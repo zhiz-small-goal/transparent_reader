@@ -44,6 +44,11 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_view(new QWebEngineView(this))
 {
+    //set default window size 
+    resize(600, 450);
+
+    setMinimumSize(300, 400);
+
     setCentralWidget(m_view);
 
     const QUrl pageUrl = locateIndexPage();
