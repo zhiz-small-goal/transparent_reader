@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Qt (MSVC)",
+      "type": "cppvsdbg",
+      "request": "launch",
+
+      "program": "${workspaceFolder}/build/bin/Debug/TransparentMdReader.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "D:/Qt/6.7.3/msvc2022_64/bin;${env:PATH}"
+        }
+      ],
+
+      "console": "externalTerminal",
+      "preLaunchTask": "cmake-build-debug"
+    }
+  ]
+}

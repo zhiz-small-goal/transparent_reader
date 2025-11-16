@@ -1,0 +1,4 @@
+D:/zhiz-c++/transparent_reader/build/CMakeFiles/ALL_BUILD.dir
+D:/zhiz-c++/transparent_reader/build/CMakeFiles/ZERO_CHECK.dir
+D:/zhiz-c++/transparent_reader/build/src/CMakeFiles/TransparentMdReader.dir
+D:/zhiz-c++/transparent_reader/build/src/CMakeFiles/TransparentMdReader_qmlimportscan.dir

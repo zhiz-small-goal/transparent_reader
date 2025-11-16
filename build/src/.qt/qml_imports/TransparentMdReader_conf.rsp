@@ -1,0 +1,9 @@
+-rootPath
+D:/zhiz-c++/transparent_reader/src
+-cmake-output
+-output-file
+D:/zhiz-c++/transparent_reader/build/src/.qt/qml_imports/TransparentMdReader_conf.cmake
+-importPath
+D:/zhiz-c++/transparent_reader/build/src
+-importPath
+D:/Qt/6.7.3/msvc2022_64/qml

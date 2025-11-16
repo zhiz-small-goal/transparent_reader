@@ -1,0 +1,27 @@
+# CMake generation dependency list for this directory.
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeCXXInformation.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeCommonLanguageInclude.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeGenericSystem.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeInitializeConfigs.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeLanguageInformation.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeRCInformation.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeSystemSpecificInformation.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/CMakeSystemSpecificInitialize.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Compiler/CMakeCommonCompilerMacros.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Compiler/MSVC-CXX.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Compiler/MSVC.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Internal/CMakeCXXLinkerInformation.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Internal/CMakeCommonLinkerInformation.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Linker/MSVC-CXX.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Linker/MSVC.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Platform/Linker/Windows-MSVC-CXX.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Platform/Linker/Windows-MSVC.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Platform/Windows-Initialize.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Platform/Windows-MSVC-CXX.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Platform/Windows-MSVC.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Platform/Windows.cmake
+D:/pschange/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2/mingw64/share/cmake-4.1/Modules/Platform/WindowsPaths.cmake
+D:/zhiz-c++/transparent_reader/CMakeLists.txt
+D:/zhiz-c++/transparent_reader/build/CMakeFiles/4.1.2/CMakeCXXCompiler.cmake
+D:/zhiz-c++/transparent_reader/build/CMakeFiles/4.1.2/CMakeRCCompiler.cmake
+D:/zhiz-c++/transparent_reader/build/CMakeFiles/4.1.2/CMakeSystem.cmake

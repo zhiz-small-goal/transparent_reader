@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\zhiz-c++\transparent_reader\build\CMakeFiles\1ab741cfb9ac5d90f49176049fad0029\TransparentMdReader_build.cmake.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\zhiz-c++\transparent_reader\build\CMakeFiles\551046cc31c024f5ece3163499086b8c\TransparentMdReader_qmlimportscan.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\zhiz-c++\transparent_reader\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\zhiz-c++\transparent_reader\build\src\CMakeFiles\TransparentMdReader_qmlimportscan" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{A7AE38C4-8D52-3996-AD13-F6E74C70D108}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

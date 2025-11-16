@@ -1,0 +1,32 @@
+^D:\ZHIZ-C++\TRANSPARENT_READER\BUILD\CMAKEFILES\1AB741CFB9AC5D90F49176049FAD0029\TRANSPARENTMDREADER_BUILD.CMAKE.RULE
+setlocal
+cd D:\zhiz-c++\transparent_reader\src
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+call D:\zhiz-c++\transparent_reader\build\.qt\bin\qt_setup_tool_path.bat D:/Qt/6.7.3/msvc2022_64/bin/qmlimportscanner.exe @D:/zhiz-c++/transparent_reader/build/src/.qt/qml_imports/TransparentMdReader_build.rsp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^D:\ZHIZ-C++\TRANSPARENT_READER\BUILD\CMAKEFILES\551046CC31C024F5ECE3163499086B8C\TRANSPARENTMDREADER_QMLIMPORTSCAN.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^D:\ZHIZ-C++\TRANSPARENT_READER\SRC\CMAKELISTS.TXT
+setlocal
+D:\pschange\winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2\mingw64\bin\cmake.exe -SD:/zhiz-c++/transparent_reader -BD:/zhiz-c++/transparent_reader/build --check-stamp-file D:/zhiz-c++/transparent_reader/build/src/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
