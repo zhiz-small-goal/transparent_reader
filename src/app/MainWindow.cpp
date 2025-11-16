@@ -12,6 +12,7 @@
 #include <QToolButton>
 #include <QLabel>
 #include <QWidget>
+#include <QMessageBox>
 
 // ================= 工具函数：找 index.html & 占位 HTML =================
 namespace
@@ -55,28 +56,26 @@ public:
     explicit TitleBar(QWidget *parent = nullptr)
         : QWidget(parent)
     {
-        // 和整体窗口保持同样透明度：背景透明，只画一条底部边线
+        // 标题栏：和整体保持类似的浅色感 + 一条若有若无的分割线
         setAttribute(Qt::WA_StyledBackground, true);
         setStyleSheet(
-            // 标题栏本身也是一块很浅的半透明白色
             "background-color: rgba(255, 255, 255, 40);"
-            // 和下面内容之间一条若有若无的分割线
             "border-bottom: 1px solid rgba(255, 255, 255, 80);"
         );
 
-        setFixedHeight(32); // 标题栏高度，你可以之后再调
+        setFixedHeight(32);
 
         auto *layout = new QHBoxLayout(this);
         layout->setContentsMargins(8, 4, 8, 4);
         layout->setSpacing(6);
 
-        // 左侧标题文字（后面可以改成图标 + 名称）
+        // 左侧标题文字
         auto *titleLabel = new QLabel(QStringLiteral("TransparentMdReader"), this);
         titleLabel->setStyleSheet("color: white;");
         layout->addWidget(titleLabel);
         layout->addStretch(1);
 
-        // 右侧按钮区：-  🔒  ⚙  ×
+        // 右侧按钮区：−  🔒/🔓  ⚙  ×
         auto makeButton = [this](const QString &text, const QString &tooltip) {
             auto *btn = new QToolButton(this);
             btn->setText(text);
@@ -96,13 +95,18 @@ public:
             return btn;
         };
 
-        auto *minBtn  = makeButton(QStringLiteral("−"), QStringLiteral("最小化"));
-        auto *lockBtn = makeButton(QStringLiteral("🔒"), QStringLiteral("锁定（预留）"));
-        auto *cfgBtn  = makeButton(QStringLiteral("⚙"), QStringLiteral("设置（预留）"));
-        auto *closeBtn= makeButton(QStringLiteral("×"), QStringLiteral("关闭"));
+        auto *minBtn   = makeButton(QStringLiteral("−"),
+                                    QStringLiteral("最小化"));
+        // 初始为“未锁定”状态，用 🔓，提示点击后会锁定
+        m_lockBtn      = makeButton(QStringLiteral("🔓"),
+                                    QStringLiteral("点击锁定窗口（禁止拖动）"));
+        auto *cfgBtn   = makeButton(QStringLiteral("⚙"),
+                                    QStringLiteral("设置"));
+        auto *closeBtn = makeButton(QStringLiteral("×"),
+                                    QStringLiteral("关闭"));
 
         layout->addWidget(minBtn);
-        layout->addWidget(lockBtn);
+        layout->addWidget(m_lockBtn);
         layout->addWidget(cfgBtn);
         layout->addWidget(closeBtn);
 
@@ -113,15 +117,31 @@ public:
             }
         });
 
-        // 先把 🔒 / ⚙ 预留出来，未来可以在 MainWindow 里加接口来控制
-        connect(lockBtn, &QToolButton::clicked, this, []() {
-            // TODO: 这里以后加「锁定」功能（例如取消拖动 / 锁定透明度等）
+        // 锁定按钮：只控制是否允许拖动，并更新图标 / 提示
+        connect(m_lockBtn, &QToolButton::clicked, this, [this]() {
+            m_locked = !m_locked;
+            if (m_locked) {
+                m_lockBtn->setText(QStringLiteral("🔒"));
+                m_lockBtn->setToolTip(
+                    QStringLiteral("已锁定：点击解锁窗口（允许拖动）"));
+            } else {
+                m_lockBtn->setText(QStringLiteral("🔓"));
+                m_lockBtn->setToolTip(
+                    QStringLiteral("已解锁：点击锁定窗口（禁止拖动）"));
+            }
         });
 
-        connect(cfgBtn, &QToolButton::clicked, this, []() {
-            // TODO: 这里以后打开设置界面 / 配置对话框
+        // 设置按钮：先弹一个占位的设置对话框，后面再接真正设置界面
+        connect(cfgBtn, &QToolButton::clicked, this, [this]() {
+            QMessageBox::information(
+                window(),
+                QStringLiteral("设置"),
+                QStringLiteral(
+                    "设置界面尚未实现。\n\n"
+                    "后续会在这里添加 TransparentMdReader 的配置选项。"));
         });
 
+        // 关闭按钮：关闭窗口
         connect(closeBtn, &QToolButton::clicked, this, [this]() {
             if (QWidget *win = window()) {
                 win->close();
@@ -132,7 +152,7 @@ public:
 protected:
     void mousePressEvent(QMouseEvent *event) override
     {
-        if (event->button() == Qt::LeftButton) {
+        if (event->button() == Qt::LeftButton && !m_locked) {
             m_dragging = true;
             if (QWidget *win = window()) {
                 m_dragOffset =
@@ -147,7 +167,7 @@ protected:
 
     void mouseMoveEvent(QMouseEvent *event) override
     {
-        if (m_dragging) {
+        if (m_dragging && !m_locked) {
             if (QWidget *win = window()) {
                 const QPoint globalPos = event->globalPosition().toPoint();
                 win->move(globalPos - m_dragOffset);
@@ -169,8 +189,10 @@ protected:
     }
 
 private:
-    bool  m_dragging   = false;
-    QPoint m_dragOffset;
+    bool         m_dragging   = false;
+    bool         m_locked     = false;
+    QPoint       m_dragOffset;
+    QToolButton *m_lockBtn    = nullptr;
 };
 
 } // namespace

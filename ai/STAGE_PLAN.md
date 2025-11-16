@@ -44,7 +44,7 @@
 ## 阶段 2：添加标题栏以及常规按钮
 
 日期：2025-11-16
-状态：进行中
+状态：已完成
 
 目标：
 - 在无边框窗口顶部添加自定义标题栏，整体透明度与窗口一致。
@@ -56,3 +56,22 @@
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
 
+
+---
+
+
+## 阶段 3：添加标题栏以及常规按钮
+
+日期：2025-11-16
+状态：已完成
+
+目标：
+- 在无边框窗口顶部添加自定义标题栏，整体透明度与窗口风格保持一致。
+- 标题栏与 Web 内容区域之间添加一条若有若无的分割线。
+- 在标题栏右侧添加常规按钮：最小化（−）、锁定（🔓/🔒）、设置（⚙）、关闭（×）。
+- 标题栏空白区域支持拖动窗口；锁定按钮可以切换「允许拖动 / 禁止拖动」状态。
+- 设置按钮暂时弹出占位对话框，后续接入真正的设置界面。
+
+涉及文件：
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
