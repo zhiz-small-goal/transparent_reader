@@ -116,27 +116,25 @@
 ---
 
 
-## 阶段 6：真正 Markdown 渲染（前端渲染管线）
+# 阶段 6：Markdown 链接渲染与点击行为（简易版）
 
-日期：2025-11-16
+日期：2025-11-16  
 状态：已完成
 
 目标：
-- 新增前端渲染管线（resources/web/），由 index.html + main.js + style.css 负责真·Markdown 渲染和样式。
-- C++ 侧不再手动拼 `<br/>`，而是读取原始 Markdown 文本，通过 `QWebEngineView::page()->runJavaScript` 调用前端的 `window.renderMarkdown(markdown, title)`。
-- 支持常见 Markdown 语法：
-  - 标题（# ~ ######）
-  - 列表（无序、有序）
-  - 引用（>）
-  - 分割线（---、***）
-  - 行内代码、代码块（```lang）
-  - 粗体 / 斜体 / 超链接
-- 内容区域使用半透明深色背景 + 浅色文字的阅读主题，适配透明窗口。
-- 页面加载状态可控：找不到 `resources/web/index.html` 时自动退回简单 HTML 兜底，保证功能可用。
+- 在现有的 C++ 端简易 Markdown → HTML 管线中，增加对 `[文本](链接)` 语法的支持。
+- 为 `<a>` 链接添加基础样式：浅蓝色文字、下划线、hover 透明度变化，在透明窗口上也有清晰的可点击提示。
+- 引入自定义 `MarkdownPage`（继承 `QWebEnginePage`），拦截所有链接点击：
+  - `.md` / `.markdown` 相对链接 → 交由主窗口在阅读器中打开对应 Markdown 文件。
+  - 其它 `http(s)` 等外部链接 → 使用系统默认浏览器打开。
+- 在 `MainWindow` 中记录当前已打开的 Markdown 文件绝对路径，用于解析内部相对链接。
+- 保持实现尽量简单，为后续切换到「真正前端渲染管线（marked.js + WebChannel）」做铺垫，不破坏整体架构。
 
 涉及文件：
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
-- D:/zhiz-c++/transparent_reader/resources/web/index.html
-- D:/zhiz-c++/transparent_reader/resources/web/main.js
-- D:/zhiz-c++/transparent_reader/resources/web/style.css
+- D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.h
+- D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.cpp
+
+---
+

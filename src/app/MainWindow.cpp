@@ -20,6 +20,8 @@
 #include <QVBoxLayout>
 #include <QWebEngineView>
 #include <QWidget>
+#include <QRegularExpression>
+
 
 // ================= 工具函数：找 index.html & 占位 HTML =================
 namespace
@@ -58,10 +60,18 @@ QString placeholderHtml()
 </html>)");
 }
 
-// basicMarkdownToHtml：作为没有前端时的兜底方案
+/// 一个非常简单的 Markdown → HTML，占个位，后面会被正式渲染管线替换
 QString basicMarkdownToHtml(const QString &markdown, const QString &title)
 {
+    // 先把 <, >, & 等转义，防止破坏 HTML 结构
     QString escaped = markdown.toHtmlEscaped();
+
+    // 1) 把 [文本](链接) 变成 <a href="链接">文本</a>
+    static const QRegularExpression linkRe(
+        R"(\[([^\]]+)\]\(([^)]+)\))");
+    escaped.replace(linkRe, R"(<a href="\2">\1</a>)");
+
+    // 2) 保留换行
     escaped.replace("\n", "<br/>\n");
 
     const QString pageTitle =
@@ -77,12 +87,21 @@ QString basicMarkdownToHtml(const QString &markdown, const QString &title)
         "    body {\n"
         "      margin: 24px;\n"
         "      color: #f5f5f5;\n"
-        "      background-color: rgba(0, 0, 0, 0.55);\n"
+        "      background-color: rgba(45, 44, 44, 0.55);\n"
         "      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n"
         "      line-height: 1.6;\n"
         "    }\n"
         "    .md-content {\n"
         "      white-space: pre-wrap;\n"
+        "    }\n"
+        "    a {\n"
+        "      color: rgba(80, 160, 255, 0.95);\n"
+        "      text-decoration: underline;\n"
+        "      cursor: pointer;\n"
+        "      transition: opacity 0.12s ease;\n"
+        "    }\n"
+        "    a:hover {\n"
+        "      opacity: 0.8;\n"
         "    }\n"
         "  </style>\n"
         "</head>\n"
@@ -96,6 +115,7 @@ QString basicMarkdownToHtml(const QString &markdown, const QString &title)
 
     return html;
 }
+
 
 // 把 QString 编码成 JS 字符串字面量：'...'
 QString toJsStringLiteral(const QString &str)
