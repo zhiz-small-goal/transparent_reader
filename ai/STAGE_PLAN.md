@@ -5,7 +5,7 @@
 ## 阶段 0：工程骨架（最小可运行窗口）
 
 日期：2025-11-16
-状态：进行中
+状态：已完成
 
 目标：
 - 用 Qt 6 + CMake 搭一个最小可运行的项目。
@@ -25,7 +25,7 @@
 ## 阶段 1：窗口外观（无边框+透明+置顶+可移动）
 
 日期：2025-11-16
-状态：进行中
+状态：已完成
 
 目标：
 - 让 MainWindow 改成无边框 + 可拖动 + 默认置顶
@@ -71,6 +71,23 @@
 - 在标题栏右侧添加常规按钮：最小化（−）、锁定（🔓/🔒）、设置（⚙）、关闭（×）。
 - 标题栏空白区域支持拖动窗口；锁定按钮可以切换「允许拖动 / 禁止拖动」状态。
 - 设置按钮暂时弹出占位对话框，后续接入真正的设置界面。
+
+涉及文件：
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
+
+---
+
+## 阶段 4：最小 Markdown 打开功能（Ctrl+O）
+
+日期：2025-11-16
+状态：已完成
+
+目标：
+- 支持通过快捷键 Ctrl+O 打开本地 Markdown 文件。
+- 从文件系统读取 .md 文本（按 UTF-8 解码）。
+- 将 Markdown 文本转换为简单 HTML 并在 QWebEngineView 中显示（当前只做行内换行，后续替换为正式 Markdown 渲染管线）。
+- 暴露 openMarkdownFile(const QString& path) 作为统一入口，后续拖拽、托盘菜单、单实例等入口都复用该函数。
 
 涉及文件：
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.h

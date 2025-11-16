@@ -13,6 +13,10 @@
 #include <QLabel>
 #include <QWidget>
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QShortcut>
 
 // ================= 工具函数：找 index.html & 占位 HTML =================
 namespace
@@ -49,6 +53,47 @@ QString placeholderHtml()
 </html>)");
 }
 
+// 一个非常简单的 Markdown → HTML，占个位，后面会被正式渲染管线替换
+QString basicMarkdownToHtml(const QString &markdown, const QString &title)
+{
+    // 先把 <, >, & 转义，避免当成 HTML 标签
+    QString escaped = markdown.toHtmlEscaped();
+    // 保留换行
+    escaped.replace("\n", "<br/>\n");
+
+    const QString pageTitle =
+        title.isEmpty() ? QStringLiteral("TransparentMdReader") : title;
+
+    const QString html = QStringLiteral(
+        "<!doctype html>\n"
+        "<html>\n"
+        "<head>\n"
+        "  <meta charset=\"utf-8\" />\n"
+        "  <title>%1</title>\n"
+        "  <style>\n"
+        "    body {\n"
+        "      margin: 24px;\n"
+        "      color: #f5f5f5;\n"
+        "      background-color: rgba(45, 44, 44, 0.55);\n"
+        "      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n"
+        "      line-height: 1.6;\n"
+        "    }\n"
+        "    .md-content {\n"
+        "      white-space: pre-wrap;\n"
+        "    }\n"
+        "  </style>\n"
+        "</head>\n"
+        "<body>\n"
+        "  <div class=\"md-content\">\n"
+        "%2\n"
+        "  </div>\n"
+        "</body>\n"
+        "</html>\n")
+            .arg(pageTitle, escaped);
+
+    return html;
+}
+
 // ================= 自定义标题栏（可拖动 + 按钮） =================
 class TitleBar : public QWidget
 {
@@ -70,7 +115,8 @@ public:
         layout->setSpacing(6);
 
         // 左侧标题文字
-        auto *titleLabel = new QLabel(QStringLiteral("TransparentMdReader"), this);
+        auto *titleLabel =
+            new QLabel(QStringLiteral("TransparentMdReader"), this);
         titleLabel->setStyleSheet("color: white;");
         layout->addWidget(titleLabel);
         layout->addStretch(1);
@@ -238,6 +284,63 @@ MainWindow::MainWindow(QWidget *parent)
     } else {
         m_view->setHtml(placeholderHtml());
     }
+
+    // 快捷键：Ctrl+O 打开本地 Markdown 文件
+    auto *openShortcut = new QShortcut(QKeySequence::Open, this);
+    connect(openShortcut, &QShortcut::activated,
+            this, &MainWindow::openMarkdownFileFromDialog);
 }
 
 MainWindow::~MainWindow() = default;
+
+// 打开文件对话框，选择 .md 再调用 openMarkdownFile()
+void MainWindow::openMarkdownFileFromDialog()
+{
+    const QString path = QFileDialog::getOpenFileName(
+        this,
+        QStringLiteral("打开 Markdown 文件"),
+        QString(),
+        QStringLiteral("Markdown 文件 (*.md *.markdown);;所有文件 (*.*)")
+    );
+
+    if (path.isEmpty()) {
+        return;
+    }
+
+    openMarkdownFile(path);
+}
+
+// 读取指定 .md 并在 WebEngine 中显示
+void MainWindow::openMarkdownFile(const QString &path)
+{
+    if (!m_view) {
+        return;
+    }
+
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::warning(
+            this,
+            QStringLiteral("打开失败"),
+            QStringLiteral("无法打开文件：\n%1").arg(path));
+        return;
+    }
+
+    QTextStream in(&file);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    in.setCodec("UTF-8");
+#else
+    in.setEncoding(QStringConverter::Utf8);
+#endif
+    const QString markdown = in.readAll();
+    file.close();
+
+    const QString fileName = QFileInfo(path).fileName();
+    const QString html = basicMarkdownToHtml(markdown, fileName);
+
+    // 第二个参数给 baseUrl，方便后面相对链接（图片等）生效
+    m_view->setHtml(html, QUrl::fromLocalFile(path));
+
+    // 同步一下窗口标题，方便区分当前打开哪个文件
+    setWindowTitle(QStringLiteral("TransparentMdReader - %1").arg(fileName));
+}
