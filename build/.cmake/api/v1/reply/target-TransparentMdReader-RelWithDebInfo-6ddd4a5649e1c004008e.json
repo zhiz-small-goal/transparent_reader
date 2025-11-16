@@ -2,10 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "bin/Release/TransparentMdReader.exe"
+			"path" : "bin/RelWithDebInfo/TransparentMdReader.exe"
 		},
 		{
-			"path" : "bin/Release/TransparentMdReader.pdb"
+			"path" : "bin/RelWithDebInfo/TransparentMdReader.pdb"
 		}
 	],
 	"backtrace" : 4,
@@ -622,7 +622,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD"
+					"fragment" : "/DWIN32 /D_WINDOWS /EHsc /Zi /O2 /Ob1 /DNDEBUG -std:c++17 -MD"
 				},
 				{
 					"backtrace" : 70,
@@ -732,7 +732,7 @@
 			[
 				{
 					"backtrace" : 0,
-					"path" : "D:/zhiz-c++/transparent_reader/build/src/TransparentMdReader_autogen/include_Release"
+					"path" : "D:/zhiz-c++/transparent_reader/build/src/TransparentMdReader_autogen/include_RelWithDebInfo"
 				},
 				{
 					"backtrace" : 70,
@@ -841,11 +841,11 @@
 	"dependencies" : 
 	[
 		{
-			"backtrace" : 100,
-			"id" : "TransparentMdReader_qmlimportscan::@145eef247bfb46b6828c"
+			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
 		},
 		{
-			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
+			"backtrace" : 100,
+			"id" : "TransparentMdReader_qmlimportscan::@145eef247bfb46b6828c"
 		}
 	],
 	"id" : "TransparentMdReader::@145eef247bfb46b6828c",
@@ -854,11 +854,11 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -MD",
+				"fragment" : "/DWIN32 /D_WINDOWS /EHsc /Zi /O2 /Ob1 /DNDEBUG -MD",
 				"role" : "flags"
 			},
 			{
-				"fragment" : "/machine:x64 /INCREMENTAL:NO",
+				"fragment" : "/machine:x64 /debug /INCREMENTAL",
 				"role" : "flags"
 			},
 			{
@@ -1040,7 +1040,7 @@
 			"backtrace" : 0,
 			"compileGroupIndex" : 0,
 			"isGenerated" : true,
-			"path" : "build/src/TransparentMdReader_autogen/mocs_compilation_Release.cpp",
+			"path" : "build/src/TransparentMdReader_autogen/mocs_compilation_RelWithDebInfo.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{

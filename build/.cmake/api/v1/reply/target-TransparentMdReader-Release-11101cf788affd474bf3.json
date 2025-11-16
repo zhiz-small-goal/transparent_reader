@@ -2,10 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "bin/Debug/TransparentMdReader.exe"
+			"path" : "bin/Release/TransparentMdReader.exe"
 		},
 		{
-			"path" : "bin/Debug/TransparentMdReader.pdb"
+			"path" : "bin/Release/TransparentMdReader.pdb"
 		}
 	],
 	"backtrace" : 4,
@@ -622,7 +622,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "/DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -std:c++17 -MDd"
+					"fragment" : "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD"
 				},
 				{
 					"backtrace" : 70,
@@ -650,6 +650,10 @@
 				{
 					"backtrace" : 5,
 					"define" : "QT_NETWORK_LIB"
+				},
+				{
+					"backtrace" : 70,
+					"define" : "QT_NO_DEBUG"
 				},
 				{
 					"backtrace" : 5,
@@ -728,7 +732,7 @@
 			[
 				{
 					"backtrace" : 0,
-					"path" : "D:/zhiz-c++/transparent_reader/build/src/TransparentMdReader_autogen/include_Debug"
+					"path" : "D:/zhiz-c++/transparent_reader/build/src/TransparentMdReader_autogen/include_Release"
 				},
 				{
 					"backtrace" : 70,
@@ -837,11 +841,11 @@
 	"dependencies" : 
 	[
 		{
-			"backtrace" : 100,
-			"id" : "TransparentMdReader_qmlimportscan::@145eef247bfb46b6828c"
+			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
 		},
 		{
-			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
+			"backtrace" : 100,
+			"id" : "TransparentMdReader_qmlimportscan::@145eef247bfb46b6828c"
 		}
 	],
 	"id" : "TransparentMdReader::@145eef247bfb46b6828c",
@@ -850,11 +854,11 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "/DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -MDd",
+				"fragment" : "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -MD",
 				"role" : "flags"
 			},
 			{
-				"fragment" : "/machine:x64 /debug /INCREMENTAL",
+				"fragment" : "/machine:x64 /INCREMENTAL:NO",
 				"role" : "flags"
 			},
 			{
@@ -863,27 +867,27 @@
 			},
 			{
 				"backtrace" : 5,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6WebEngineWidgetsd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6WebEngineWidgets.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 12,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6WebEngineCored.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6WebEngineCore.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 27,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Quickd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Quick.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 30,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6QmlModelsd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6QmlModels.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 39,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6OpenGLd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6OpenGL.lib",
 				"role" : "libraries"
 			},
 			{
@@ -893,17 +897,17 @@
 			},
 			{
 				"backtrace" : 5,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6WebChanneld.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6WebChannel.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 45,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Qmld.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Qml.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 51,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Networkd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Network.lib",
 				"role" : "libraries"
 			},
 			{
@@ -913,32 +917,32 @@
 			},
 			{
 				"backtrace" : 57,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6QmlBuiltinsd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6QmlBuiltins.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 63,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Positioningd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Positioning.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 69,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6PrintSupportd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6PrintSupport.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 5,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Widgetsd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Widgets.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 5,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Guid.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Gui.lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 70,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Cored.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6Core.lib",
 				"role" : "libraries"
 			},
 			{
@@ -953,7 +957,7 @@
 			},
 			{
 				"backtrace" : 84,
-				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6EntryPointd.lib",
+				"fragment" : "D:\\Qt\\6.7.3\\msvc2022_64\\lib\\Qt6EntryPoint.lib",
 				"role" : "libraries"
 			},
 			{
@@ -1036,7 +1040,7 @@
 			"backtrace" : 0,
 			"compileGroupIndex" : 0,
 			"isGenerated" : true,
-			"path" : "build/src/TransparentMdReader_autogen/mocs_compilation_Debug.cpp",
+			"path" : "build/src/TransparentMdReader_autogen/mocs_compilation_Release.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
