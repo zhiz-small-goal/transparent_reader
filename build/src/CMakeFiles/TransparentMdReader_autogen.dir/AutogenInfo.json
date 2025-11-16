@@ -828,6 +828,12 @@
 			"MU",
 			"VJIZ3MDCXP/moc_MainWindow.cpp",
 			null
+		],
+		[
+			"D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.h",
+			"MU",
+			"VJIZ3MDCXP/moc_MarkdownPage.cpp",
+			null
 		]
 	],
 	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
@@ -1063,6 +1069,7 @@
 	"SOURCES" : 
 	[
 		[ "D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp", "MU", null ],
+		[ "D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.cpp", "MU", null ],
 		[ "D:/zhiz-c++/transparent_reader/src/app/main.cpp", "MU", null ]
 	],
 	"UIC_OPTIONS" : [],

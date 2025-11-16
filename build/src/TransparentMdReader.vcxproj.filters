@@ -10,6 +10,9 @@
     <ClCompile Include="D:\zhiz-c++\transparent_reader\src\app\MainWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\zhiz-c++\transparent_reader\src\app\MarkdownPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\zhiz-c++\transparent_reader\build\src\TransparentMdReader_autogen\mocs_compilation_Release.cpp">
       <Filter>Source Files\Generated</Filter>
     </ClCompile>
@@ -22,6 +25,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D:\zhiz-c++\transparent_reader\src\app\MainWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\zhiz-c++\transparent_reader\src\app\MarkdownPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

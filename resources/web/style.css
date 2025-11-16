@@ -1,0 +1,206 @@
+:root {
+  --md-bg: rgba(0, 0, 0, 0.55);
+  --md-fg: #f5f5f5;
+  --md-fg-muted: #b0b0b0;
+  --md-accent: #55b7ff;
+  --md-border-subtle: rgba(255, 255, 255, 0.18);
+  --md-code-bg: rgba(0, 0, 0, 0.7);
+  --md-inline-code-bg: rgba(255, 255, 255, 0.08);
+  --md-code-border: rgba(255, 255, 255, 0.15);
+  --md-font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --md-mono: "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: transparent;
+  color: var(--md-fg);
+  font-family: var(--md-font);
+  line-height: 1.6;
+}
+
+/* 根容器：一个半透明深色卡片，贴合透明窗体 */
+.md-root {
+  min-height: 100vh;
+  padding: 20px 24px 24px 24px;
+  box-sizing: border-box;
+  background-color: var(--md-bg);
+  border-radius: 12px;
+  border: 1px solid var(--md-border-subtle);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  overflow-y: auto;
+}
+
+/* 初始提示 */
+.md-loading {
+  text-align: center;
+  margin-top: 80px;
+  opacity: 0.8;
+  font-size: 14px;
+}
+
+.md-loading p {
+  margin: 0.25em 0;
+}
+
+.md-hint {
+  font-size: 12px;
+  color: var(--md-fg-muted);
+}
+
+/* 正文区域 */
+.md-content {
+  max-width: 860px;
+  margin: 0 auto;
+  font-size: 14px;
+}
+
+/* 标题 */
+.md-content h1,
+.md-content h2,
+.md-content h3,
+.md-content h4,
+.md-content h5,
+.md-content h6 {
+  font-weight: 600;
+  margin: 1.6em 0 0.6em;
+  line-height: 1.3;
+}
+
+.md-content h1 {
+  font-size: 26px;
+  border-bottom: 1px solid var(--md-border-subtle);
+  padding-bottom: 0.3em;
+}
+
+.md-content h2 {
+  font-size: 22px;
+  border-bottom: 1px solid var(--md-border-subtle);
+  padding-bottom: 0.25em;
+}
+
+.md-content h3 {
+  font-size: 18px;
+}
+
+.md-content h4 {
+  font-size: 16px;
+}
+
+.md-content h5,
+.md-content h6 {
+  font-size: 14px;
+}
+
+/* 段落 & 列表 */
+.md-content p {
+  margin: 0.4em 0 0.6em;
+}
+
+.md-content ul,
+.md-content ol {
+  margin: 0.4em 0 0.6em 1.4em;
+  padding-left: 1.1em;
+}
+
+.md-content li {
+  margin: 0.1em 0;
+}
+
+/* 引用 */
+.md-content blockquote {
+  margin: 0.6em 0;
+  padding: 0.35em 0.8em;
+  border-left: 3px solid var(--md-accent);
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--md-fg-muted);
+}
+
+/* 分割线 */
+.md-content hr {
+  border: none;
+  border-top: 1px solid var(--md-border-subtle);
+  margin: 1.4em 0;
+}
+
+/* 链接 */
+.md-content a {
+  color: var(--md-accent);
+  text-decoration: none;
+}
+
+.md-content a:hover {
+  text-decoration: underline;
+}
+
+/* 行内代码 */
+.md-content code {
+  font-family: var(--md-mono);
+  font-size: 0.95em;
+}
+
+/* 行内代码（非块） */
+.md-content p code,
+.md-content li code {
+  background-color: var(--md-inline-code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+/* 代码块 */
+.md-content pre {
+  margin: 0.8em 0;
+  padding: 0.7em 0.9em;
+  background-color: var(--md-code-bg);
+  border-radius: 8px;
+  border: 1px solid var(--md-code-border);
+  overflow-x: auto;
+}
+
+.md-content pre code {
+  font-family: var(--md-mono);
+  font-size: 12px;
+}
+
+/* 表格（简单支持） */
+.md-content table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  font-size: 13px;
+}
+
+.md-content th,
+.md-content td {
+  border: 1px solid var(--md-border-subtle);
+  padding: 0.35em 0.6em;
+}
+
+.md-content th {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* 标题栏下面第一块内容稍微顶一点 */
+.md-content > :first-child {
+  margin-top: 0;
+}
+
+/* 滚动条稍微美化一下 */
+.md-root::-webkit-scrollbar {
+  width: 8px;
+}
+
+.md-root::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.md-root::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}

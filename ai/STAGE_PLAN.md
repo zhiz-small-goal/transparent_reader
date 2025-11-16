@@ -112,3 +112,31 @@
 涉及文件：
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
+
+---
+
+
+## 阶段 6：真正 Markdown 渲染（前端渲染管线）
+
+日期：2025-11-16
+状态：已完成
+
+目标：
+- 新增前端渲染管线（resources/web/），由 index.html + main.js + style.css 负责真·Markdown 渲染和样式。
+- C++ 侧不再手动拼 `<br/>`，而是读取原始 Markdown 文本，通过 `QWebEngineView::page()->runJavaScript` 调用前端的 `window.renderMarkdown(markdown, title)`。
+- 支持常见 Markdown 语法：
+  - 标题（# ~ ######）
+  - 列表（无序、有序）
+  - 引用（>）
+  - 分割线（---、***）
+  - 行内代码、代码块（```lang）
+  - 粗体 / 斜体 / 超链接
+- 内容区域使用半透明深色背景 + 浅色文字的阅读主题，适配透明窗口。
+- 页面加载状态可控：找不到 `resources/web/index.html` 时自动退回简单 HTML 兜底，保证功能可用。
+
+涉及文件：
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
+- D:/zhiz-c++/transparent_reader/resources/web/index.html
+- D:/zhiz-c++/transparent_reader/resources/web/main.js
+- D:/zhiz-c++/transparent_reader/resources/web/style.css

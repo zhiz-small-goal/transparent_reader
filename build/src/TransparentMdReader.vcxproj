@@ -440,6 +440,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\zhiz-c++\transparent_reader\src\app\main.cpp" />
     <ClCompile Include="D:\zhiz-c++\transparent_reader\src\app\MainWindow.cpp" />
     <ClInclude Include="D:\zhiz-c++\transparent_reader\src\app\MainWindow.h" />
+    <ClCompile Include="D:\zhiz-c++\transparent_reader\src\app\MarkdownPage.cpp" />
+    <ClInclude Include="D:\zhiz-c++\transparent_reader\src\app\MarkdownPage.h" />
     <ClCompile Include="D:\zhiz-c++\transparent_reader\build\src\TransparentMdReader_autogen\mocs_compilation_Release.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</ExcludedFromBuild>

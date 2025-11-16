@@ -1,29 +1,30 @@
 #include "MainWindow.h"
+#include "MarkdownPage.h"
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPoint>
-#include <QString>
+#include <QShortcut>
+#include <QStandardPaths>
+#include <QSettings>
+#include <QTextStream>
+#include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QWebEngineView>
-#include <QToolButton>
-#include <QLabel>
 #include <QWidget>
-#include <QMessageBox>
-#include <QFileDialog>
-#include <QFile>
-#include <QTextStream>
-#include <QShortcut>
-#include <QFileInfo>          
-#include <QStandardPaths>
-#include <QSettings>      
 
 // ================= 工具函数：找 index.html & 占位 HTML =================
 namespace
 {
+
 QUrl locateIndexPage()
 {
     QDir dir(QCoreApplication::applicationDirPath());
@@ -50,18 +51,17 @@ QString placeholderHtml()
     <title>TransparentMdReader</title>
   </head>
   <body>
-    <h1>Hello, TransparentMdReader</h1>
-    <p>TODO: hook up Markdown rendering / web channel / state persistence.</p>
+    <h1>TransparentMdReader</h1>
+    <p>未找到前端资源（resources/web/index.html）。</p>
+    <p>请检查工程中的 resources/web/ 目录。</p>
   </body>
 </html>)");
 }
 
-// 一个非常简单的 Markdown → HTML，占个位，后面会被正式渲染管线替换
+// basicMarkdownToHtml：作为没有前端时的兜底方案
 QString basicMarkdownToHtml(const QString &markdown, const QString &title)
 {
-    // 先把 <, >, & 转义，避免当成 HTML 标签
     QString escaped = markdown.toHtmlEscaped();
-    // 保留换行
     escaped.replace("\n", "<br/>\n");
 
     const QString pageTitle =
@@ -77,7 +77,7 @@ QString basicMarkdownToHtml(const QString &markdown, const QString &title)
         "    body {\n"
         "      margin: 24px;\n"
         "      color: #f5f5f5;\n"
-        "      background-color: rgba(45, 44, 44, 0.55);\n"
+        "      background-color: rgba(0, 0, 0, 0.55);\n"
         "      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n"
         "      line-height: 1.6;\n"
         "    }\n"
@@ -97,6 +97,18 @@ QString basicMarkdownToHtml(const QString &markdown, const QString &title)
     return html;
 }
 
+// 把 QString 编码成 JS 字符串字面量：'...'
+QString toJsStringLiteral(const QString &str)
+{
+    QString s = str;
+    s.replace("\\", "\\\\");
+    s.replace("'", "\\'");
+    s.replace("\r", "");
+    s.replace("\n", "\\n");
+    s.replace("\t", "\\t");
+    return "'" + s + "'";
+}
+
 // ================= 自定义标题栏（可拖动 + 按钮） =================
 class TitleBar : public QWidget
 {
@@ -104,7 +116,6 @@ public:
     explicit TitleBar(QWidget *parent = nullptr)
         : QWidget(parent)
     {
-        // 标题栏：和整体保持类似的浅色感 + 一条若有若无的分割线
         setAttribute(Qt::WA_StyledBackground, true);
         setStyleSheet(
             "background-color: rgba(255, 255, 255, 40);"
@@ -117,14 +128,12 @@ public:
         layout->setContentsMargins(8, 4, 8, 4);
         layout->setSpacing(6);
 
-        // 左侧标题文字
         auto *titleLabel =
             new QLabel(QStringLiteral("TransparentMdReader"), this);
         titleLabel->setStyleSheet("color: white;");
         layout->addWidget(titleLabel);
         layout->addStretch(1);
 
-        // 右侧按钮区：−  🔒/🔓  ⚙  ×
         auto makeButton = [this](const QString &text, const QString &tooltip) {
             auto *btn = new QToolButton(this);
             btn->setText(text);
@@ -146,7 +155,6 @@ public:
 
         auto *minBtn   = makeButton(QStringLiteral("−"),
                                     QStringLiteral("最小化"));
-        // 初始为“未锁定”状态，用 🔓，提示点击后会锁定
         m_lockBtn      = makeButton(QStringLiteral("🔓"),
                                     QStringLiteral("点击锁定窗口（禁止拖动）"));
         auto *cfgBtn   = makeButton(QStringLiteral("⚙"),
@@ -159,14 +167,12 @@ public:
         layout->addWidget(cfgBtn);
         layout->addWidget(closeBtn);
 
-        // 按钮行为：直接操作窗口
         connect(minBtn, &QToolButton::clicked, this, [this]() {
             if (QWidget *win = window()) {
                 win->showMinimized();
             }
         });
 
-        // 锁定按钮：只控制是否允许拖动，并更新图标 / 提示
         connect(m_lockBtn, &QToolButton::clicked, this, [this]() {
             m_locked = !m_locked;
             if (m_locked) {
@@ -180,7 +186,6 @@ public:
             }
         });
 
-        // 设置按钮：先弹一个占位的设置对话框，后面再接真正设置界面
         connect(cfgBtn, &QToolButton::clicked, this, [this]() {
             QMessageBox::information(
                 window(),
@@ -190,7 +195,6 @@ public:
                     "后续会在这里添加 TransparentMdReader 的配置选项。"));
         });
 
-        // 关闭按钮：关闭窗口
         connect(closeBtn, &QToolButton::clicked, this, [this]() {
             if (QWidget *win = window()) {
                 win->close();
@@ -261,7 +265,7 @@ MainWindow::MainWindow(QWidget *parent)
     resize(720, 900);
     setMinimumSize(480, 600);
 
-    // ================== 中央容器：上面标题栏，下面 QWebEngineView ==================
+    // 中央容器：上面标题栏，下面 QWebEngineView
     auto *central = new QWidget(this);
     central->setAttribute(Qt::WA_TranslucentBackground);
     central->setAutoFillBackground(false);
@@ -270,65 +274,75 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    // 顶部标题栏（可拖动）
     auto *titleBar = new TitleBar(central);
     layout->addWidget(titleBar);
 
     // WebEngine 区域
     m_view = new QWebEngineView(central);
+    auto *page = new MarkdownPage(m_view);      // ✅ 使用自定义 QWebEnginePage
+    m_view->setPage(page);
     layout->addWidget(m_view, 1);
 
-    setCentralWidget(central);  // ✅ 现在是在声明 central 之后调用
+    // 连接内部 Markdown 链接信号
+    connect(page, &MarkdownPage::openMarkdown,
+            this, &MainWindow::handleOpenMarkdownUrl);
 
-    // ================== 初始化“最后打开目录”（支持跨重启记忆） ==================
+
+    setCentralWidget(central);
+
+    // 初始化“最后打开目录”：优先用文档目录，其次 home 目录，然后看配置
     QSettings settings("zhiz", "TransparentMdReader");
-
-    // 先尝试从配置里读上次保存的目录
     const QString savedDir = settings.value("ui/lastOpenDir").toString();
 
-    // 默认目录：文档目录 / home 目录
     QString defaultDir =
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     if (defaultDir.isEmpty()) {
         defaultDir = QDir::homePath();
     }
 
-    // 如果配置里有值并且目录存在，就用它；否则退回默认目录
     if (!savedDir.isEmpty() && QDir(savedDir).exists()) {
         m_lastOpenDir = savedDir;
     } else {
         m_lastOpenDir = defaultDir;
     }
 
-
-    // ================== 加载本地 index.html 或占位 HTML ==================
+    // 加载前端页面（如有），否则用占位 HTML
     const QUrl pageUrl = locateIndexPage();
     if (pageUrl.isValid()) {
+        m_useEmbeddedViewer = true;
         m_view->load(pageUrl);
+        connect(m_view, &QWebEngineView::loadFinished,
+                this, [this](bool ok) {
+                    m_pageLoaded = ok;
+                    if (ok && !m_pendingMarkdown.isEmpty()) {
+                        renderMarkdownInPage(m_pendingMarkdown, m_pendingTitle);
+                        m_pendingMarkdown.clear();
+                        m_pendingTitle.clear();
+                    }
+                });
     } else {
+        m_useEmbeddedViewer = false;
         m_view->setHtml(placeholderHtml());
     }
 
-    // ================== 快捷键：Ctrl+O 打开本地 Markdown 文件 ==================
+    // 快捷键：Ctrl+O 打开本地 Markdown 文件
     auto *openShortcut = new QShortcut(QKeySequence::Open, this);
     connect(openShortcut, &QShortcut::activated,
             this, &MainWindow::openMarkdownFileFromDialog);
 }
-
 
 MainWindow::~MainWindow() = default;
 
 // 打开文件对话框，选择 .md 再调用 openMarkdownFile()
 void MainWindow::openMarkdownFileFromDialog()
 {
-    // 起始目录：上次成功打开的目录；如果还没有，就用 home 目录
     const QString startDir =
         m_lastOpenDir.isEmpty() ? QDir::homePath() : m_lastOpenDir;
 
     const QString path = QFileDialog::getOpenFileName(
         this,
         QStringLiteral("打开 Markdown 文件"),
-        startDir,   // ✅ 用 startDir，而不是 QString()
+        startDir,
         QStringLiteral("Markdown 文件 (*.md *.markdown);;所有文件 (*.*)")
     );
 
@@ -336,32 +350,78 @@ void MainWindow::openMarkdownFileFromDialog()
         return;
     }
 
-    // ✅ 这里也顺手更新一下“最后打开目录”
-    m_lastOpenDir = QFileInfo(path).absolutePath();
-
     openMarkdownFile(path);
+}
+void MainWindow::handleOpenMarkdownUrl(const QUrl &url)
+{
+    // 如果当前还没有打开任何 md，就没法解析相对路径
+    if (m_currentFilePath.isEmpty()) {
+        return;
+    }
+
+    QFileInfo currentFi(m_currentFilePath);
+    QDir      baseDir(currentFi.absolutePath());
+
+    QString localPath;
+
+    if (url.isRelative()) {
+        // 相对路径：基于当前 md 文件所在目录
+        localPath = baseDir.absoluteFilePath(url.path());
+    } else if (url.isLocalFile()) {
+        // file:// 本地路径
+        localPath = url.toLocalFile();
+    } else {
+        // 正常不会走到这里：外部链接已经在 MarkdownPage 里交给系统浏览器了
+        return;
+    }
+
+    if (localPath.isEmpty()) {
+        return;
+    }
+
+    QFileInfo fi(localPath);
+    if (!fi.exists()) {
+        QMessageBox::warning(
+            this,
+            QStringLiteral("打开失败"),
+            QStringLiteral("找不到链接指向的 Markdown 文件：\n%1")
+                .arg(localPath));
+        return;
+    }
+
+    openMarkdownFile(fi.absoluteFilePath());
 }
 
 
-// 读取指定 .md 并在 WebEngine 中显示
+
+// 调用前端 JS 进行渲染
+void MainWindow::renderMarkdownInPage(const QString &markdown,
+                                      const QString &title)
+{
+    if (!m_view) {
+        return;
+    }
+
+    const QString js =
+        QStringLiteral("window.renderMarkdown(%1, %2);")
+            .arg(toJsStringLiteral(markdown), toJsStringLiteral(title));
+
+    m_view->page()->runJavaScript(js);
+}
+
+// 读取指定 .md 并渲染显示
 void MainWindow::openMarkdownFile(const QString &path)
 {
     if (!m_view) {
         return;
     }
 
-    // 更新 lastOpenDir，并写入配置，支持跨重启记忆
-    const QFileInfo fi(path);
-    const QString dir = fi.absolutePath();
-    if (!dir.isEmpty()) {
-        m_lastOpenDir = dir;
-
-        QSettings settings("zhiz", "TransparentMdReader");
-        settings.setValue("ui/lastOpenDir", m_lastOpenDir);
-    }
+    // 记录当前文件和目录
+    QFileInfo fi(path);
+    m_lastOpenDir     = fi.absolutePath();
+    m_currentFilePath = fi.absoluteFilePath();
 
     QFile file(path);
-    
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::warning(
             this,
@@ -379,12 +439,13 @@ void MainWindow::openMarkdownFile(const QString &path)
     const QString markdown = in.readAll();
     file.close();
 
-    const QString fileName = QFileInfo(path).fileName();
-    const QString html = basicMarkdownToHtml(markdown, fileName);
+    const QString fileName = fi.fileName();
+    const QString html     = basicMarkdownToHtml(markdown, fileName);
 
-    // 第二个参数给 baseUrl，方便后面相对链接（图片等）生效
+    // 第二个参数给 baseUrl，方便后面相对链接（图片 / 内部链接）生效
     m_view->setHtml(html, QUrl::fromLocalFile(path));
 
-    // 同步一下窗口标题，方便区分当前打开哪个文件
+    // 窗口标题也带上文件名
     setWindowTitle(QStringLiteral("TransparentMdReader - %1").arg(fileName));
 }
+

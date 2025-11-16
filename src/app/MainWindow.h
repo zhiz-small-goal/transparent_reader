@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QString>
+#include <QUrl>
 
 QT_BEGIN_NAMESPACE
 class QWebEngineView;
@@ -16,18 +17,31 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
-    // 打开指定路径的 Markdown 文件（给以后其它入口复用）
+    // 打开指定 Markdown 文件
     void openMarkdownFile(const QString &path);
 
-
-private:
-    // 弹出文件选择框，选择 .md，内部调用 openMarkdownFile()
+private slots:
+    // Ctrl+O 打开文件对话框
     void openMarkdownFileFromDialog();
 
+    // Web 页面里点击内部 .md 链接时调用
+    void handleOpenMarkdownUrl(const QUrl &url);
+
+private:
+    // 把 markdown 文本送进 WebEngine（以后切到 marked.js 也会用）
+    void renderMarkdownInPage(const QString &markdown,
+                              const QString &title);
 
 private:
     QWebEngineView *m_view = nullptr;
-    QString         m_lastOpenDir;   // ✅ 本次会话内的“最后打开目录”
+
+    QString m_lastOpenDir;        // 最近打开目录
+    QString m_currentFilePath;    // 当前 md 文件绝对路径
+
+    bool    m_useEmbeddedViewer = false;
+    bool    m_pageLoaded        = false;
+    QString m_pendingMarkdown;
+    QString m_pendingTitle;
 };
 
 #endif // TRANSPARENTMDREADER_MAINWINDOW_H

@@ -29,6 +29,8 @@ qt_add_executable(TransparentMdReader
     app/main.cpp
     app/MainWindow.cpp
     app/MainWindow.h
+    app/MarkdownPage.cpp
+    app/MarkdownPage.h
 )
 
 # 4. 链接 Qt 库

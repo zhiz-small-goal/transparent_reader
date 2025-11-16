@@ -1,18 +1,20 @@
 <!doctype html>
-<html>
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <title>TransparentMdReader</title>
-    <style>
-      body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        margin: 32px;
-        background: rgba(255, 255, 255, 0.85);
-      }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>Hello, TransparentMdReader</h1>
-    <p>Placeholder page for the transparent Markdown reader shell.</p>
+    <div id="md-root" class="md-root">
+      <div class="md-loading">
+        <p>等待打开 Markdown 文件…</p>
+        <p class="md-hint">快捷键：Ctrl + O 打开本地 .md 文件</p>
+      </div>
+      <div id="md-content" class="md-content" hidden></div>
+    </div>
+
+    <script src="main.js"></script>
   </body>
 </html>
