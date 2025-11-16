@@ -3,6 +3,7 @@ D:/zhiz-c++/transparent_reader/src/app/main.cpp
 D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
 D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
  mmc:Q_OBJECT
+ mdp:D:/Qt/6.7.3/msvc2022_64/include/QtCore/QString
  mdp:D:/Qt/6.7.3/msvc2022_64/include/QtCore/q20functional.h
  mdp:D:/Qt/6.7.3/msvc2022_64/include/QtCore/q20memory.h
  mdp:D:/Qt/6.7.3/msvc2022_64/include/QtCore/q20type_traits.h

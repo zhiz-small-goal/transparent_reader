@@ -1,4 +1,5 @@
 D:/zhiz-c++/transparent_reader/build/src/TransparentMdReader_autogen/include_Debug/VJIZ3MDCXP/moc_MainWindow.cpp: D:/zhiz-c++/transparent_reader/src/app/MainWindow.h \
+  D:/Qt/6.7.3/msvc2022_64/include/QtCore/QString \
   D:/Qt/6.7.3/msvc2022_64/include/QtCore/q20functional.h \
   D:/Qt/6.7.3/msvc2022_64/include/QtCore/q20memory.h \
   D:/Qt/6.7.3/msvc2022_64/include/QtCore/q20type_traits.h \

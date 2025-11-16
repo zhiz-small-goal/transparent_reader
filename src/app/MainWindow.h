@@ -2,6 +2,7 @@
 #define TRANSPARENTMDREADER_MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QString>
 
 QT_BEGIN_NAMESPACE
 class QWebEngineView;
@@ -26,6 +27,7 @@ private:
 
 private:
     QWebEngineView *m_view = nullptr;
+    QString         m_lastOpenDir;   // ✅ 本次会话内的“最后打开目录”
 };
 
 #endif // TRANSPARENTMDREADER_MAINWINDOW_H

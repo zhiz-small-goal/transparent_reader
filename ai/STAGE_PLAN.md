@@ -92,3 +92,23 @@
 涉及文件：
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
+
+---
+
+## 阶段 5：Markdown 打开功能（快捷键 + 目录记忆）
+
+日期：2025-11-16
+状态：已完成
+
+目标：
+- 支持通过快捷键 Ctrl+O 打开本地 Markdown 文件。
+- 使用 UTF-8 读取 .md 文本，并通过 basicMarkdownToHtml 转成简单 HTML，在 QWebEngineView 中显示。
+- 内容区域采用深色半透明背景 + 浅色文字，保证在透明窗口下可读。
+- 提供统一入口：`MainWindow::openMarkdownFile(const QString& path)`，后续拖拽 / 最近文件 / 单实例等入口复用该函数。
+- 会话内记住“最后一次成功打开的目录”，多次 Ctrl+O 时从该目录起跳。
+- 使用 `QSettings("zhiz", "TransparentMdReader")` 持久化保存 `ui/lastOpenDir`，支持跨重启记住上次打开目录。
+- 打开文件后，窗口标题更新为 `TransparentMdReader - <文件名>`，方便区分当前文档。
+
+涉及文件：
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.h
+- D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp

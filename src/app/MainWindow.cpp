@@ -17,6 +17,9 @@
 #include <QFile>
 #include <QTextStream>
 #include <QShortcut>
+#include <QFileInfo>          
+#include <QStandardPaths>
+#include <QSettings>      
 
 // ================= 工具函数：找 index.html & 占位 HTML =================
 namespace
@@ -258,7 +261,7 @@ MainWindow::MainWindow(QWidget *parent)
     resize(720, 900);
     setMinimumSize(480, 600);
 
-    // 中央容器：上面标题栏，下面 QWebEngineView
+    // ================== 中央容器：上面标题栏，下面 QWebEngineView ==================
     auto *central = new QWidget(this);
     central->setAttribute(Qt::WA_TranslucentBackground);
     central->setAutoFillBackground(false);
@@ -275,9 +278,30 @@ MainWindow::MainWindow(QWidget *parent)
     m_view = new QWebEngineView(central);
     layout->addWidget(m_view, 1);
 
-    setCentralWidget(central);
+    setCentralWidget(central);  // ✅ 现在是在声明 central 之后调用
 
-    // 加载本地 index.html 或占位 HTML
+    // ================== 初始化“最后打开目录”（支持跨重启记忆） ==================
+    QSettings settings("zhiz", "TransparentMdReader");
+
+    // 先尝试从配置里读上次保存的目录
+    const QString savedDir = settings.value("ui/lastOpenDir").toString();
+
+    // 默认目录：文档目录 / home 目录
+    QString defaultDir =
+        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    if (defaultDir.isEmpty()) {
+        defaultDir = QDir::homePath();
+    }
+
+    // 如果配置里有值并且目录存在，就用它；否则退回默认目录
+    if (!savedDir.isEmpty() && QDir(savedDir).exists()) {
+        m_lastOpenDir = savedDir;
+    } else {
+        m_lastOpenDir = defaultDir;
+    }
+
+
+    // ================== 加载本地 index.html 或占位 HTML ==================
     const QUrl pageUrl = locateIndexPage();
     if (pageUrl.isValid()) {
         m_view->load(pageUrl);
@@ -285,21 +309,26 @@ MainWindow::MainWindow(QWidget *parent)
         m_view->setHtml(placeholderHtml());
     }
 
-    // 快捷键：Ctrl+O 打开本地 Markdown 文件
+    // ================== 快捷键：Ctrl+O 打开本地 Markdown 文件 ==================
     auto *openShortcut = new QShortcut(QKeySequence::Open, this);
     connect(openShortcut, &QShortcut::activated,
             this, &MainWindow::openMarkdownFileFromDialog);
 }
+
 
 MainWindow::~MainWindow() = default;
 
 // 打开文件对话框，选择 .md 再调用 openMarkdownFile()
 void MainWindow::openMarkdownFileFromDialog()
 {
+    // 起始目录：上次成功打开的目录；如果还没有，就用 home 目录
+    const QString startDir =
+        m_lastOpenDir.isEmpty() ? QDir::homePath() : m_lastOpenDir;
+
     const QString path = QFileDialog::getOpenFileName(
         this,
         QStringLiteral("打开 Markdown 文件"),
-        QString(),
+        startDir,   // ✅ 用 startDir，而不是 QString()
         QStringLiteral("Markdown 文件 (*.md *.markdown);;所有文件 (*.*)")
     );
 
@@ -307,8 +336,12 @@ void MainWindow::openMarkdownFileFromDialog()
         return;
     }
 
+    // ✅ 这里也顺手更新一下“最后打开目录”
+    m_lastOpenDir = QFileInfo(path).absolutePath();
+
     openMarkdownFile(path);
 }
+
 
 // 读取指定 .md 并在 WebEngine 中显示
 void MainWindow::openMarkdownFile(const QString &path)
@@ -317,7 +350,18 @@ void MainWindow::openMarkdownFile(const QString &path)
         return;
     }
 
+    // 更新 lastOpenDir，并写入配置，支持跨重启记忆
+    const QFileInfo fi(path);
+    const QString dir = fi.absolutePath();
+    if (!dir.isEmpty()) {
+        m_lastOpenDir = dir;
+
+        QSettings settings("zhiz", "TransparentMdReader");
+        settings.setValue("ui/lastOpenDir", m_lastOpenDir);
+    }
+
     QFile file(path);
+    
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::warning(
             this,
