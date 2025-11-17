@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"D:/zhiz-c++/transparent_reader/build/cmake_install.cmake",
-		"D:/zhiz-c++/transparent_reader/build/src/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
