@@ -270,6 +270,114 @@ private:
     QToolButton *m_lockBtn    = nullptr;
 };
 
+// ================= 图片查看浮层（半透明背景 + 右上角关闭） =================
+class ImageOverlay : public QWidget      // NEW
+{
+public:
+    explicit ImageOverlay(QWidget *parent = nullptr)
+        : QWidget(parent)
+    {
+        setAttribute(Qt::WA_StyledBackground, true);
+        setStyleSheet("background-color: rgba(0, 0, 0, 180);");
+        setMouseTracking(true);
+        setVisible(false);
+
+        auto *layout = new QVBoxLayout(this);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setAlignment(Qt::AlignCenter);
+
+        m_imageLabel = new QLabel(this);
+        m_imageLabel->setAlignment(Qt::AlignCenter);
+        m_imageLabel->setSizePolicy(QSizePolicy::Ignored,
+                                    QSizePolicy::Ignored);
+        m_imageLabel->setScaledContents(true);
+        layout->addWidget(m_imageLabel);
+
+        m_closeBtn = new QToolButton(this);
+        m_closeBtn->setText(QStringLiteral("×"));
+        m_closeBtn->setToolTip(QStringLiteral("关闭图片"));
+        m_closeBtn->setCursor(Qt::PointingHandCursor);
+        m_closeBtn->setAutoRaise(true);
+        m_closeBtn->setStyleSheet(
+            "QToolButton {"
+            "  color: white;"
+            "  background-color: transparent;"
+            "  padding: 2px 6px;"
+            "  border-radius: 12px;"
+            "}"
+            "QToolButton:hover {"
+            "  background-color: rgba(255, 255, 255, 40);"
+            "}"
+        );
+        m_closeBtn->hide();
+
+        connect(m_closeBtn, &QToolButton::clicked,
+                this, &ImageOverlay::hide);
+    }
+
+    bool showImage(const QString &filePath)
+    {
+        QPixmap pix(filePath);
+        if (pix.isNull()) {
+            return false;
+        }
+
+        m_imageLabel->setPixmap(pix);
+
+        if (QWidget *p = parentWidget()) {
+            resize(p->size());
+            move(0, 0);
+        }
+
+        show();
+        raise();
+        m_closeBtn->show();
+        return true;
+    }
+
+protected:
+    void resizeEvent(QResizeEvent *event) override
+    {
+        QWidget::resizeEvent(event);
+        if (m_closeBtn) {
+            const int margin = 12;
+            m_closeBtn->move(width() - m_closeBtn->width() - margin, margin);
+        }
+    }
+
+    void enterEvent(QEnterEvent *event) override
+    {
+        Q_UNUSED(event);
+        if (m_closeBtn) {
+            m_closeBtn->show();    // 鼠标移入浮层时显示关闭按钮
+        }
+    }
+
+    void leaveEvent(QEvent *event) override
+    {
+        QWidget::leaveEvent(event);
+        if (m_closeBtn) {
+            m_closeBtn->hide();    // 鼠标移出浮层时隐藏关闭按钮
+        }
+    }
+
+    void mousePressEvent(QMouseEvent *event) override
+    {
+        // 点击图片之外：关闭浮层
+        if (m_imageLabel
+            && !m_imageLabel->geometry().contains(event->pos())) {
+            hide();
+            event->accept();
+            return;
+        }
+        QWidget::mousePressEvent(event);
+    }
+
+private:
+    QLabel      *m_imageLabel = nullptr;
+    QToolButton *m_closeBtn   = nullptr;
+};
+
 } // namespace
 
 // ================= MainWindow 实现 =================
@@ -308,6 +416,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_view->setPage(page);
     connect(page, &MarkdownPage::openMarkdown,
             this, &MainWindow::handleOpenMarkdownUrl);
+
+    connect(page, &MarkdownPage::openImage,              
+        this, &MainWindow::handleOpenImageUrl);      
 
 
     setCentralWidget(central);

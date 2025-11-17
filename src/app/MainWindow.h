@@ -9,6 +9,8 @@ QT_BEGIN_NAMESPACE
 class QWebEngineView;
 QT_END_NAMESPACE
 
+class ImageOverlay;                    // NEW 前向声明
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -28,6 +30,8 @@ private slots:
     // Web 页面里点击内部 .md 链接时调用
     void handleOpenMarkdownUrl(const QUrl &url);
 
+    void handleOpenImageUrl(const QUrl &url); 
+
 private:
     // 把 markdown 文本送进 WebEngine（以后切到 marked.js 也会用）
     void renderMarkdownInPage(const QString &markdown,
@@ -36,6 +40,7 @@ private:
 
 private:
     QWebEngineView *m_view = nullptr;
+    ImageOverlay   *m_imageOverlay = nullptr;
 
     QString m_lastOpenDir;        // 最近打开目录
     QString m_currentFilePath;    // 当前 md 文件绝对路径

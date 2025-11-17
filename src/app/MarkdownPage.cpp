@@ -8,6 +8,20 @@ static bool isInternalMarkdown(const QUrl &url)
     return path.endsWith(".md") || path.endsWith(".markdown");
 }
 
+// NEW: 判断是否为图片链接（本地或远程都按图片处理）
+bool isImageUrl(const QUrl &url)  // NEW
+{
+    const QString path = url.path().toLower();
+
+    return path.endsWith(".png")
+        || path.endsWith(".jpg")
+        || path.endsWith(".jpeg")
+        || path.endsWith(".gif")
+        || path.endsWith(".bmp")
+        || path.endsWith(".webp")
+        || path.endsWith(".svg");
+}
+
 bool MarkdownPage::acceptNavigationRequest(const QUrl &url,
                                            NavigationType type,
                                            bool isMainFrame)
@@ -15,14 +29,21 @@ bool MarkdownPage::acceptNavigationRequest(const QUrl &url,
     Q_UNUSED(isMainFrame);
 
     if (type == QWebEnginePage::NavigationTypeLinkClicked) {
+        // 1) 内部 Markdown 链接：交给 MainWindow 处理
         if (isInternalMarkdown(url)) {
-            // 内部 md 链接 → 交给 MainWindow
             emit openMarkdown(url);
-        } else {
-            // 其它（http / https 等） → 交给系统默认浏览器
-            QDesktopServices::openUrl(url);
+            return false; // 阻止 WebEngine 自己跳转到 .md
         }
-        return false; // 阻止 WebEngine 自己跳转
+
+        // 2) 图片链接：交给 MainWindow 打开图片浮层           // NEW
+        if (isImageUrl(url)) {                                      // NEW
+            emit openImage(url);                                    // NEW
+            return false;                                           // NEW
+        }
+
+        // 3) 其它（http/https、本地 html、pdf 等）：交给系统默认程序          // CHANGED
+        QDesktopServices::openUrl(url);
+        return false;
     }
 
     return QWebEnginePage::acceptNavigationRequest(url, type, isMainFrame);
