@@ -271,6 +271,10 @@ private:
 };
 
 // ================= 图片查看浮层（半透明背景 + 右上角关闭） =================
+
+
+} // namespace
+
 class ImageOverlay : public QWidget      // NEW
 {
 public:
@@ -377,8 +381,6 @@ private:
     QLabel      *m_imageLabel = nullptr;
     QToolButton *m_closeBtn   = nullptr;
 };
-
-} // namespace
 
 // ================= MainWindow 实现 =================
 
@@ -500,9 +502,9 @@ void MainWindow::handleOpenMarkdownUrl(const QUrl &url)  // CHANGED
     QDir      baseDir(curFi.absolutePath());
     const QString targetPath = baseDir.absoluteFilePath(fileName);
 
-    if (targetPath.isEmpty()) {
-        return;
-    }
+    // if (targetPath.isEmpty()) {
+    //     return;
+    // }
 
     QFileInfo fi(targetPath);
     if (!fi.exists() || !fi.isFile()) {
@@ -519,23 +521,70 @@ void MainWindow::handleOpenMarkdownUrl(const QUrl &url)  // CHANGED
 }
 
 
-
-
 // 文件：src/app/MainWindow.cpp
-void MainWindow::renderMarkdownInPage(const QString &markdown,
-                                      const QString &title,
-                                      const QUrl    &baseUrl)   // CHANGED
+// 处理图片链接点击：在阅读器内弹出图片浮层
+void MainWindow::handleOpenImageUrl(const QUrl &url)
 {
-    if (!m_view) {
+    QString localPath;
+
+    if (url.isLocalFile()) {
+        localPath = url.toLocalFile();
+    } else if (url.scheme().isEmpty()
+               || url.scheme() == QStringLiteral("file")) {
+        // 相对路径：基于当前 md 所在目录解析
+        if (m_currentFilePath.isEmpty()) {
+            return;
+        }
+        QFileInfo curFi(m_currentFilePath);
+        QDir      baseDir(curFi.absolutePath());
+        localPath = baseDir.absoluteFilePath(url.path());
+    } else {
+        // http/https 等仍然交给系统浏览器
+        QDesktopServices::openUrl(url);
         return;
     }
 
-    const QString js =
-        QStringLiteral("window.renderMarkdown(%1, %2, %3);")
-            .arg(toJsStringLiteral(markdown),
-                 toJsStringLiteral(title),
-                 toJsStringLiteral(
-                     baseUrl.toString(QUrl::FullyEncoded)));
+    if (localPath.isEmpty()) {
+        return;
+    }
+
+    QFileInfo fi(localPath);
+    if (!fi.exists() || !fi.isFile()) {
+        QMessageBox::warning(
+            this,
+            QStringLiteral("打开失败"),
+            QStringLiteral("找不到图片文件：\n%1").arg(localPath));
+        return;
+    }
+
+    if (!m_imageOverlay) {
+        m_imageOverlay = new ImageOverlay(this);
+    }
+
+    if (!m_imageOverlay->showImage(fi.absoluteFilePath())) {
+        QMessageBox::warning(
+            this,
+            QStringLiteral("打开失败"),
+            QStringLiteral("无法加载图片：\n%1").arg(localPath));
+    }
+}
+
+
+// 文件：src/app/MainWindow.cpp
+// 函数：MainWindow::renderMarkdownInPage  （请直接整体替换）
+
+void MainWindow::renderMarkdownInPage(const QString &markdown,
+                                      const QString &title,
+                                      const QUrl    &baseUrl)
+{
+    if (!m_view) return;
+
+    QString js = QStringLiteral(
+        "window.renderMarkdown(%1, %2, %3);"
+    )
+                     .arg(toJsStringLiteral(markdown))
+                     .arg(toJsStringLiteral(title))
+                     .arg(toJsStringLiteral(baseUrl.toString()));
 
     m_view->page()->runJavaScript(js);
 }
@@ -574,11 +623,9 @@ void MainWindow::openMarkdownFileFromDialog()   // NEW
 
 // 文件：src/app/MainWindow.cpp
 // 读取指定 .md 并渲染显示（当前仍使用 basicMarkdownToHtml 占位渲染）
-void MainWindow::openMarkdownFile(const QString &path)  // CHANGED
+void MainWindow::openMarkdownFile(const QString &path)
 {
-    if (!m_view) {
-        return;
-    }
+    if (!m_view) return;
 
     QFileInfo fi(path);
     if (!fi.exists() || !fi.isFile()) {
@@ -589,16 +636,17 @@ void MainWindow::openMarkdownFile(const QString &path)  // CHANGED
         return;
     }
 
-    // 记录当前文件和目录（供内部链接解析 + 记忆 lastOpenDir 使用）
+    // 记录路径
     m_lastOpenDir     = fi.absolutePath();
     m_currentFilePath = fi.absoluteFilePath();
 
-    // 可选：把 lastOpenDir 写入 QSettings，记住下次启动的默认目录
+    // 写入设置
     {
         QSettings settings("zhiz", "TransparentMdReader");
         settings.setValue("ui/lastOpenDir", m_lastOpenDir);
     }
 
+    // 读取 Markdown 文本
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::warning(
@@ -614,16 +662,25 @@ void MainWindow::openMarkdownFile(const QString &path)  // CHANGED
 #else
     in.setEncoding(QStringConverter::Utf8);
 #endif
-    const QString markdown = in.readAll();
+    QString markdown = in.readAll();
     file.close();
 
-    const QString fileName = fi.fileName();
-    const QString html     = basicMarkdownToHtml(markdown, fileName);
+    // 准备传给前端的 baseUrl
+    QUrl baseUrl = QUrl::fromLocalFile(fi.absolutePath() + "/");
 
-    // 第二个参数给 baseUrl，方便相对链接（图片 / 内部 md 链接）正确解析
-    m_view->setHtml(html, QUrl::fromLocalFile(path));
+    // 加载前端 index.html（如果尚未加载）
+    if (!m_pageLoaded) {
+        const QUrl index = locateIndexPage();
 
-    // 窗口标题带上文件名
-    setWindowTitle(
-        QStringLiteral("TransparentMdReader - %1").arg(fileName));
+        m_pendingMarkdown = markdown;
+        m_pendingTitle    = fi.fileName();
+        m_pendingBaseUrl  = baseUrl.toString();
+
+        m_view->setUrl(index);
+        return;
+    }
+
+    // 前端已就绪：直接渲染
+    renderMarkdownInPage(markdown, fi.fileName(), baseUrl);
+    setWindowTitle(QStringLiteral("TransparentMdReader - %1").arg(fi.fileName()));
 }

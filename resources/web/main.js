@@ -211,6 +211,7 @@
   // C++ 调用：window.renderMarkdown(markdown, title, baseUrl)
   window.renderMarkdown = function (markdown, title, baseUrl) {
     const contentEl = document.getElementById("md-content");
+    console.log("BASE=", baseUrl);
     if (!contentEl) return;
 
     if (typeof baseUrl === "string" && baseUrl.length > 0) {
@@ -225,4 +226,6 @@
     setDocumentTitle(title);
     showContent();
   };
+
+  
 })();
