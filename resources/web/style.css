@@ -101,7 +101,8 @@ body {
 
 /* 段落 & 列表 */
 .md-content p {
-  margin: 0.4em 0 0.6em;
+  margin-top: 0;               /* CHANGED */
+  margin-bottom: 1.4em;
 }
 
 .md-content ul,
