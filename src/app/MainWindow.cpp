@@ -303,8 +303,10 @@ MainWindow::MainWindow(QWidget *parent)
     m_view = new QWebEngineView(central);
     layout->addWidget(m_view, 1);
 
-    // 直接监听 urlChanged：每次页面导航到新 URL 时处理链接
-    connect(m_view, &QWebEngineView::urlChanged,
+    // 使用自定义 QWebEnginePage（MarkdownPage）拦截链接点击
+    auto *page = new MarkdownPage(m_view);
+    m_view->setPage(page);
+    connect(page, &MarkdownPage::openMarkdown,
             this, &MainWindow::handleOpenMarkdownUrl);
 
 
@@ -326,7 +328,8 @@ MainWindow::MainWindow(QWidget *parent)
         m_lastOpenDir = defaultDir;
     }
 
-    // 加载前端页面（如有），否则用占位 HTML
+    // 文件：src/app/MainWindow.cpp （构造函数内部）
+
     const QUrl pageUrl = locateIndexPage();
     if (pageUrl.isValid()) {
         m_useEmbeddedViewer = true;
@@ -335,15 +338,20 @@ MainWindow::MainWindow(QWidget *parent)
                 this, [this](bool ok) {
                     m_pageLoaded = ok;
                     if (ok && !m_pendingMarkdown.isEmpty()) {
-                        renderMarkdownInPage(m_pendingMarkdown, m_pendingTitle);
+                        const QUrl baseUrl(m_pendingBaseUrl);
+                        renderMarkdownInPage(m_pendingMarkdown,
+                                             m_pendingTitle,
+                                             baseUrl);
                         m_pendingMarkdown.clear();
                         m_pendingTitle.clear();
+                        m_pendingBaseUrl.clear();
                     }
                 });
     } else {
         m_useEmbeddedViewer = false;
         m_view->setHtml(placeholderHtml());
     }
+
 
     // 快捷键：Ctrl+O 打开本地 Markdown 文件
     auto *openShortcut = new QShortcut(QKeySequence::Open, this);
@@ -353,84 +361,40 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() = default;
 
-// 打开文件对话框，选择 .md 再调用 openMarkdownFile()
-void MainWindow::openMarkdownFileFromDialog()
+
+
+
+
+// 文件：src/app/MainWindow.cpp
+// 说明：处理文内 .md 链接的点击（由 MarkdownPage::openMarkdown 信号触发）
+void MainWindow::handleOpenMarkdownUrl(const QUrl &url)  // CHANGED
 {
-    const QString startDir =
-        m_lastOpenDir.isEmpty() ? QDir::homePath() : m_lastOpenDir;
-
-    const QString path = QFileDialog::getOpenFileName(
-        this,
-        QStringLiteral("打开 Markdown 文件"),
-        startDir,
-        QStringLiteral("Markdown 文件 (*.md *.markdown);;所有文件 (*.*)")
-    );
-
-    if (path.isEmpty()) {
-        return;
-    }
-
-    openMarkdownFile(path);
-}
-void MainWindow::handleOpenMarkdownUrl(const QUrl &url)
-{
-    // 还没有打开任何 md，没法做内部跳转
+    // 还没有成功打开过任何 md，没法做内部跳转
     if (m_currentFilePath.isEmpty()) {
         return;
     }
 
-    // 1) 如果只是重新加载当前文件（openMarkdownFile 自己触发的），直接忽略
-    if (url.isLocalFile()) {
-        const QString u = QFileInfo(url.toLocalFile()).canonicalFilePath();
-        const QString cur = QFileInfo(m_currentFilePath).canonicalFilePath();
-        if (!u.isEmpty() && !cur.isEmpty() && u == cur) {
-            return;
-        }
-    }
+    // 从 URL 中提取“文件名”，不关心前面是 file:/// 还是 qrc:/ 等
+    const QString urlPath  = url.path();                   // 例如 /F:/.../4-introduction....md
+    const QString fileName = QFileInfo(urlPath).fileName();// 例如 4-introduction....md
+    const QString lower    = fileName.toLower();
 
-    const QString scheme = url.scheme().toLower();
-    const QString path   = url.path();
-
-    // 2) 外部 http(s) 链接：交给系统浏览器，然后恢复当前 md
-    if (scheme == QStringLiteral("http")
-        || scheme == QStringLiteral("https")) {
-
-        QDesktopServices::openUrl(url);
-
-        // 回到当前文档（防止 WebEngine 自己留在外部网页上）
-        if (!m_currentFilePath.isEmpty()) {
-            openMarkdownFile(m_currentFilePath);
-        }
+    // 只处理 .md / .markdown，其它一律忽略（http/https 已在 MarkdownPage 里处理）
+    if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
         return;
     }
 
-    // 3) 内部 Markdown 链接（相对或本地 file://）
-    auto isMdPath = [](const QString &p) {
-        const QString lower = p.toLower();
-        return lower.endsWith(".md") || lower.endsWith(".markdown");
-    };
-
-    QString targetPath;
-
-    if (url.isRelative() && isMdPath(path)) {
-        // 3.1 相对路径：基于当前 md 所在目录解析
-        QFileInfo curFi(m_currentFilePath);
-        QDir      baseDir(curFi.absolutePath());
-        targetPath = baseDir.absoluteFilePath(path);
-    } else if (url.isLocalFile() && isMdPath(url.toLocalFile())) {
-        // 3.2 file:// 本地绝对路径
-        targetPath = url.toLocalFile();
-    } else {
-        // 其它情况（锚点、非 md、本地 html 等）先交给默认行为
-        return;
-    }
+    // 目标路径 = 当前 md 所在目录 + 链接里的文件名
+    QFileInfo curFi(m_currentFilePath);
+    QDir      baseDir(curFi.absolutePath());
+    const QString targetPath = baseDir.absoluteFilePath(fileName);
 
     if (targetPath.isEmpty()) {
         return;
     }
 
     QFileInfo fi(targetPath);
-    if (!fi.exists()) {
+    if (!fi.exists() || !fi.isFile()) {
         QMessageBox::warning(
             this,
             QStringLiteral("打开失败"),
@@ -439,38 +403,90 @@ void MainWindow::handleOpenMarkdownUrl(const QUrl &url)
         return;
     }
 
+    // 统一走 openMarkdownFile：记忆目录 + 当前文件路径 + 渲染全部在里面
     openMarkdownFile(fi.absoluteFilePath());
 }
 
 
 
 
-// 调用前端 JS 进行渲染
+// 文件：src/app/MainWindow.cpp
 void MainWindow::renderMarkdownInPage(const QString &markdown,
-                                      const QString &title)
+                                      const QString &title,
+                                      const QUrl    &baseUrl)   // CHANGED
 {
     if (!m_view) {
         return;
     }
 
     const QString js =
-        QStringLiteral("window.renderMarkdown(%1, %2);")
-            .arg(toJsStringLiteral(markdown), toJsStringLiteral(title));
+        QStringLiteral("window.renderMarkdown(%1, %2, %3);")
+            .arg(toJsStringLiteral(markdown),
+                 toJsStringLiteral(title),
+                 toJsStringLiteral(
+                     baseUrl.toString(QUrl::FullyEncoded)));
 
     m_view->page()->runJavaScript(js);
 }
 
-// 读取指定 .md 并渲染显示
-void MainWindow::openMarkdownFile(const QString &path)
+
+// 文件：src/app/MainWindow.cpp
+// 作用：弹出文件对话框选择 .md，并调用 openMarkdownFile 打开
+void MainWindow::openMarkdownFileFromDialog()   // NEW
+{
+    // 起始目录：优先用记忆目录，其次文档目录，最后用户 home
+    QString startDir = m_lastOpenDir;
+    if (startDir.isEmpty()) {
+        startDir =
+            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        if (startDir.isEmpty()) {
+            startDir = QDir::homePath();
+        }
+    }
+
+    const QString filter =
+        QStringLiteral("Markdown 文件 (*.md *.markdown);;所有文件 (*.*)");
+
+    const QString path = QFileDialog::getOpenFileName(
+        this,
+        QStringLiteral("打开 Markdown 文件"),
+        startDir,
+        filter);
+
+    if (path.isEmpty()) {
+        return;
+    }
+
+    openMarkdownFile(path);
+}
+
+
+// 文件：src/app/MainWindow.cpp
+// 读取指定 .md 并渲染显示（当前仍使用 basicMarkdownToHtml 占位渲染）
+void MainWindow::openMarkdownFile(const QString &path)  // CHANGED
 {
     if (!m_view) {
         return;
     }
 
-    // 记录当前文件和目录
     QFileInfo fi(path);
+    if (!fi.exists() || !fi.isFile()) {
+        QMessageBox::warning(
+            this,
+            QStringLiteral("打开失败"),
+            QStringLiteral("找不到文件：\n%1").arg(path));
+        return;
+    }
+
+    // 记录当前文件和目录（供内部链接解析 + 记忆 lastOpenDir 使用）
     m_lastOpenDir     = fi.absolutePath();
     m_currentFilePath = fi.absoluteFilePath();
+
+    // 可选：把 lastOpenDir 写入 QSettings，记住下次启动的默认目录
+    {
+        QSettings settings("zhiz", "TransparentMdReader");
+        settings.setValue("ui/lastOpenDir", m_lastOpenDir);
+    }
 
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -493,10 +509,10 @@ void MainWindow::openMarkdownFile(const QString &path)
     const QString fileName = fi.fileName();
     const QString html     = basicMarkdownToHtml(markdown, fileName);
 
-    // 第二个参数给 baseUrl，方便后面相对链接（图片 / 内部链接）生效
+    // 第二个参数给 baseUrl，方便相对链接（图片 / 内部 md 链接）正确解析
     m_view->setHtml(html, QUrl::fromLocalFile(path));
 
-    // 窗口标题也带上文件名
-    setWindowTitle(QStringLiteral("TransparentMdReader - %1").arg(fileName));
+    // 窗口标题带上文件名
+    setWindowTitle(
+        QStringLiteral("TransparentMdReader - %1").arg(fileName));
 }
-

@@ -23,6 +23,7 @@ public:
 private slots:
     // Ctrl+O 打开文件对话框
     void openMarkdownFileFromDialog();
+    
 
     // Web 页面里点击内部 .md 链接时调用
     void handleOpenMarkdownUrl(const QUrl &url);
@@ -30,7 +31,8 @@ private slots:
 private:
     // 把 markdown 文本送进 WebEngine（以后切到 marked.js 也会用）
     void renderMarkdownInPage(const QString &markdown,
-                              const QString &title);
+                              const QString &title,
+                              const QUrl    &baseUrl);
 
 private:
     QWebEngineView *m_view = nullptr;
@@ -42,6 +44,7 @@ private:
     bool    m_pageLoaded        = false;
     QString m_pendingMarkdown;
     QString m_pendingTitle;
+    QString m_pendingBaseUrl;     // NEW：待渲染文档的 baseUrl
 };
 
 #endif // TRANSPARENTMDREADER_MAINWINDOW_H

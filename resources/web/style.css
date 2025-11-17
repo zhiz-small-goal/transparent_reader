@@ -204,3 +204,115 @@ body {
   background-color: rgba(255, 255, 255, 0.25);
   border-radius: 4px;
 }
+
+
+/* 图片查看浮层（点击图片链接时弹出） */  /* NEW */
+.image-viewer-overlay {  /* NEW */
+  position: fixed;       /* NEW */
+  inset: 0;              /* NEW */
+  display: none;         /* NEW */
+  align-items: center;   /* NEW */
+  justify-content: center; /* NEW */
+  z-index: 9999;         /* NEW */
+}                        /* NEW */
+
+.image-viewer-overlay.visible { /* NEW */
+  display: flex;               /* NEW */
+}                               /* NEW */
+
+.image-viewer-backdrop {        /* NEW */
+  position: absolute;          /* NEW */
+  inset: 0;                    /* NEW */
+  background: rgba(0, 0, 0, 0.65); /* NEW */
+}                              /* NEW */
+
+.image-viewer-content {        /* NEW */
+  position: relative;          /* NEW */
+  max-width: 90vw;             /* NEW */
+  max-height: 90vh;            /* NEW */
+  border-radius: 8px;          /* NEW */
+  overflow: hidden;            /* NEW */
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7); /* NEW */
+  border: 1px solid var(--md-border-subtle);  /* NEW */
+  background: rgba(0, 0, 0, 0.9);             /* NEW */
+}                              /* NEW */
+
+.image-viewer-img {            /* NEW */
+  display: block;              /* NEW */
+  max-width: 90vw;             /* NEW */
+  max-height: 90vh;            /* NEW */
+}                              /* NEW */
+
+.image-viewer-close {          /* NEW */
+  position: absolute;          /* NEW */
+  top: 8px;                    /* NEW */
+  right: 8px;                  /* NEW */
+  padding: 4px 10px;           /* NEW */
+  border-radius: 4px;          /* NEW */
+  border: 1px solid var(--md-border-subtle); /* NEW */
+  background: rgba(0, 0, 0, 0.85);          /* NEW */
+  color: var(--md-fg);         /* NEW */
+  cursor: pointer;             /* NEW */
+  font-size: 14px;             /* NEW */
+  line-height: 1;              /* NEW */
+}                              /* NEW */
+
+.image-viewer-close:hover {    /* NEW */
+  background: rgba(255, 255, 255, 0.1); /* NEW */
+}                              /* NEW */
+
+
+/* 图片查看浮层（点击图片链接时弹出） */  /* NEW */
+.image-viewer-overlay {  /* NEW */
+  position: fixed;       /* NEW */
+  inset: 0;              /* NEW */
+  display: none;         /* NEW */
+  align-items: center;   /* NEW */
+  justify-content: center; /* NEW */
+  z-index: 9999;         /* NEW */
+}                        /* NEW */
+
+.image-viewer-overlay.visible { /* NEW */
+  display: flex;               /* NEW */
+}                               /* NEW */
+
+.image-viewer-backdrop {        /* NEW */
+  position: absolute;          /* NEW */
+  inset: 0;                    /* NEW */
+  background: rgba(0, 0, 0, 0.65); /* NEW */
+}                              /* NEW */
+
+.image-viewer-content {        /* NEW */
+  position: relative;          /* NEW */
+  max-width: 90vw;             /* NEW */
+  max-height: 90vh;            /* NEW */
+  border-radius: 8px;          /* NEW */
+  overflow: hidden;            /* NEW */
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7); /* NEW */
+  border: 1px solid var(--md-border-subtle);  /* NEW */
+  background: rgba(0, 0, 0, 0.9);             /* NEW */
+}                              /* NEW */
+
+.image-viewer-img {            /* NEW */
+  display: block;              /* NEW */
+  max-width: 90vw;             /* NEW */
+  max-height: 90vh;            /* NEW */
+}                              /* NEW */
+
+.image-viewer-close {          /* NEW */
+  position: absolute;          /* NEW */
+  top: 8px;                    /* NEW */
+  right: 8px;                  /* NEW */
+  padding: 4px 10px;           /* NEW */
+  border-radius: 4px;          /* NEW */
+  border: 1px solid var(--md-border-subtle); /* NEW */
+  background: rgba(19, 19, 19, 0.85);          /* NEW */
+  color: var(--md-fg);         /* NEW */
+  cursor: pointer;             /* NEW */
+  font-size: 14px;             /* NEW */
+  line-height: 1;              /* NEW */
+}                              /* NEW */
+
+.image-viewer-close:hover {    /* NEW */
+  background: rgba(255, 255, 255, 0.1); /* NEW */
+}                              /* NEW */

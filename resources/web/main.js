@@ -1,229 +1,225 @@
+// 文件：resources/web/main.js
+// 作用：使用 markdown-it 渲染 Markdown，并处理链接解析 + 图片浮层
+
 (function () {
-  function escapeHtml(str) {
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  function renderInline(text) {
-    let out = escapeHtml(text);
-
-    // 链接 [text](url)
-    out = out.replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2">$1</a>'
+  // ===============================
+  // Markdown-it 初始化
+  // ===============================
+  if (!window.markdownit) {
+    console.error(
+      "markdown-it 未加载，请确认 markdown-it.min.js 已在 index.html 中引入。"
     );
-
-    // 行内代码 `code`
-    out = out.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-    // 粗体 **text** 或 __text__
-    out = out.replace(/(\*\*|__)(.+?)\1/g, "<strong>$2</strong>");
-
-    // 斜体 *text* 或 _text_
-    out = out.replace(/(\*|_)([^*_]+)\1/g, "<em>$2</em>");
-
-    return out;
+    return;
   }
 
-  function flushParagraph(buffer, htmlParts) {
-    if (buffer.length === 0) return;
-    const text = buffer.join(" ").trim();
-    if (!text) {
-      buffer.length = 0;
-      return;
+  // 当前文档的 baseUrl（例如 file:///F:/.../md_convert/）
+  let gMarkdownBaseUrl = "";
+
+  function isAbsoluteUrl(url) {
+    if (!url) return false;
+    return /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url) || url.startsWith("/");
+  }
+
+  function resolveMarkdownHref(rawHref) {
+    const href = (rawHref || "").trim();
+    if (!href) return "";
+
+    // 已经是绝对地址（http/https/file/mailto 等）或缺少 baseUrl 时，原样返回
+    if (!gMarkdownBaseUrl || isAbsoluteUrl(href)) {
+      return href;
     }
-    htmlParts.push("<p>" + renderInline(text) + "</p>");
-    buffer.length = 0;
+
+    try {
+      const base = gMarkdownBaseUrl.endsWith("/")
+        ? gMarkdownBaseUrl
+        : gMarkdownBaseUrl + "/";
+      return new URL(href, base).toString();
+    } catch (e) {
+      console.error("resolveMarkdownHref error:", e, href, gMarkdownBaseUrl);
+      return href;
+    }
   }
 
-  function flushList(listItems, htmlParts, ordered) {
-    if (listItems.length === 0) return;
-    const tag = ordered ? "ol" : "ul";
-    htmlParts.push("<" + tag + ">");
-    for (const item of listItems) {
-      htmlParts.push("<li>" + renderInline(item) + "</li>");
+  // 创建 markdown-it 实例（行为大致和 VS Code 预览一致）
+  const md = window.markdownit({
+    html: false, // 不允许原始 HTML，避免样式被破坏
+    linkify: true, // 识别裸露链接
+    breaks: false,
+    typographer: false,
+  });
+
+  // 自定义链接渲染：把相对链接改成基于 baseUrl 的绝对地址
+  const defaultLinkOpen =
+    md.renderer.rules.link_open ||
+    function (tokens, idx, options, env, self) {
+      return self.renderToken(tokens, idx, options);
+    };
+
+  md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+    const hrefIndex = tokens[idx].attrIndex("href");
+    if (hrefIndex >= 0) {
+      const orig = tokens[idx].attrs[hrefIndex][1] || "";
+      const resolved = resolveMarkdownHref(orig);
+      tokens[idx].attrs[hrefIndex][1] = resolved;
     }
-    htmlParts.push("</" + tag + ">");
-    listItems.length = 0;
-  }
+    return defaultLinkOpen(tokens, idx, options, env, self);
+  };
+
+  // 自定义图片渲染：同样修正 src（支持 ![](media/xxx.png) 这类）
+  const defaultImage =
+    md.renderer.rules.image ||
+    function (tokens, idx, options, env, self) {
+      return self.renderToken(tokens, idx, options);
+    };
+
+  md.renderer.rules.image = function (tokens, idx, options, env, self) {
+    const srcIndex = tokens[idx].attrIndex("src");
+    if (srcIndex >= 0) {
+      const orig = tokens[idx].attrs[srcIndex][1] || "";
+      const resolved = resolveMarkdownHref(orig);
+      tokens[idx].attrs[srcIndex][1] = resolved;
+    }
+    return defaultImage(tokens, idx, options, env, self);
+  };
 
   function renderMarkdownToHtml(markdown) {
-    const lines = markdown.split(/\r?\n/);
-    const htmlParts = [];
-
-    let inCodeBlock = false;
-    let codeFenceLang = "";
-    let codeLines = [];
-
-    let paraBuffer = [];
-
-    let inList = false;
-    let listOrdered = false;
-    let listItems = [];
-
-    const startList = (ordered) => {
-      if (inList && listOrdered === ordered) return;
-      flushParagraph(paraBuffer, htmlParts);
-      flushList(listItems, htmlParts, listOrdered);
-      inList = true;
-      listOrdered = ordered;
-    };
-
-    const endListIfAny = () => {
-      if (!inList) return;
-      flushList(listItems, htmlParts, listOrdered);
-      inList = false;
-      listItems = [];
-    };
-
-    for (let i = 0; i < lines.length; ++i) {
-      const line = lines[i];
-
-      // 代码块围栏 ```lang
-      const fenceMatch = line.match(/^```(\w+)?\s*$/);
-      if (fenceMatch) {
-        if (inCodeBlock) {
-          // 结束代码块
-          const code = escapeHtml(codeLines.join("\n"));
-          const langClass = codeFenceLang ? " class=\"lang-" + codeFenceLang + "\"" : "";
-          htmlParts.push(
-            "<pre><code" + langClass + ">" + code + "</code></pre>"
-          );
-          codeLines = [];
-          inCodeBlock = false;
-          codeFenceLang = "";
-        } else {
-          // 开始代码块
-          flushParagraph(paraBuffer, htmlParts);
-          endListIfAny();
-          inCodeBlock = true;
-          codeFenceLang = fenceMatch[1] || "";
-        }
-        continue;
-      }
-
-      if (inCodeBlock) {
-        codeLines.push(line);
-        continue;
-      }
-
-      // 空行：结束段落 / 列表
-      if (/^\s*$/.test(line)) {
-        flushParagraph(paraBuffer, htmlParts);
-        endListIfAny();
-        continue;
-      }
-
-      // 标题 # .. ######
-      const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
-      if (headingMatch) {
-        flushParagraph(paraBuffer, htmlParts);
-        endListIfAny();
-        const level = headingMatch[1].length;
-        const text = headingMatch[2].trim();
-        const id = text
-          .toLowerCase()
-          .replace(/[^\w\u4e00-\u9fa5]+/g, "-")
-          .replace(/-+/g, "-")
-          .replace(/^-|-$/g, "");
-        htmlParts.push(
-          "<h" +
-            level +
-            (id ? ' id="' + id + '"' : "") +
-            ">" +
-            renderInline(text) +
-            "</h" +
-            level +
-            ">"
-        );
-        continue;
-      }
-
-      // 引用 >
-      const quoteMatch = line.match(/^\s*>\s?(.*)$/);
-      if (quoteMatch) {
-        flushParagraph(paraBuffer, htmlParts);
-        endListIfAny();
-        htmlParts.push(
-          "<blockquote>" + renderInline(quoteMatch[1]) + "</blockquote>"
-        );
-        continue;
-      }
-
-      // 水平线 --- 或 *** 等
-      if (/^(\s*[-*_]){3,}\s*$/.test(line)) {
-        flushParagraph(paraBuffer, htmlParts);
-        endListIfAny();
-        htmlParts.push("<hr/>");
-        continue;
-      }
-
-      // 无序列表 - * +
-      const ulMatch = line.match(/^\s*[-*+]\s+(.+)$/);
-      if (ulMatch) {
-        startList(false);
-        listItems.push(ulMatch[1].trim());
-        continue;
-      }
-
-      // 有序列表 1. 2.
-      const olMatch = line.match(/^\s*(\d+)\.\s+(.+)$/);
-      if (olMatch) {
-        startList(true);
-        listItems.push(olMatch[2].trim());
-        continue;
-      }
-
-      // 普通段落
-      if (/^\s/.test(line)) {
-        // 以空格开头，当成段落延续
-        paraBuffer.push(line.trim());
-      } else {
-        // 新段落开始
-        flushParagraph(paraBuffer, htmlParts);
-        paraBuffer.push(line.trim());
-      }
-    }
-
-    // 收尾
-    flushParagraph(paraBuffer, htmlParts);
-    flushList(listItems, htmlParts, listOrdered);
-
-    if (inCodeBlock && codeLines.length > 0) {
-      const code = escapeHtml(codeLines.join("\n"));
-      htmlParts.push("<pre><code>" + code + "</code></pre>");
-    }
-
-    return htmlParts.join("\n");
+    return md.render(markdown || "");
   }
 
+  // ===============================
+  // 标题 & 内容显示控制
+  // ===============================
   function setDocumentTitle(title) {
-    if (title && typeof title === "string") {
-      document.title = title;
-    } else {
-      document.title = "TransparentMdReader";
-    }
+    if (!title) return;
+    document.title = title;
   }
 
   function showContent() {
-    const loading = document.querySelector(".md-loading");
+    const root = document.getElementById("md-root");
+    const loading = root && root.querySelector(".md-loading");
     const content = document.getElementById("md-content");
-    if (loading) {
-      loading.hidden = true;
-    }
-    if (content) {
-      content.hidden = false;
-    }
+    if (loading) loading.hidden = true;
+    if (content) content.hidden = false;
   }
 
-  // 暴露给 C++ 调用的接口
-  window.renderMarkdown = function (markdown, title) {
+  // ===============================
+  // 图片查看浮层（Lightbox）
+  // ===============================
+  function setupImageViewerOverlay() {
+    if (document.getElementById("image-viewer-overlay")) {
+      return;
+    }
+
+    const overlay = document.createElement("div");
+    overlay.id = "image-viewer-overlay";
+    overlay.className = "image-viewer-overlay";
+    overlay.innerHTML =
+      '<div class="image-viewer-backdrop"></div>' +
+      '<div class="image-viewer-content">' +
+      '  <button type="button" class="image-viewer-close" aria-label="关闭图片">×</button>' +
+      '  <img class="image-viewer-img" alt="" />' +
+      "</div>";
+
+    document.body.appendChild(overlay);
+
+    const imgEl = overlay.querySelector(".image-viewer-img");
+    const closeBtn = overlay.querySelector(".image-viewer-close");
+    const backdrop = overlay.querySelector(".image-viewer-backdrop");
+
+    function hideOverlay() {
+      overlay.classList.remove("visible");
+      imgEl.removeAttribute("src");
+    }
+
+    function showOverlay(src, altText) {
+      imgEl.removeAttribute("src");
+      imgEl.alt = altText || "";
+      overlay.classList.add("visible");
+      imgEl.src = src;
+    }
+
+    // 图片加载失败：自动关闭浮层并提示（后续可以改成 toast）
+    imgEl.addEventListener("error", function () {
+      const failedUrl = imgEl.src;
+      hideOverlay();
+      console.warn("图片加载失败或文件不存在:", failedUrl);
+      alert("图片加载失败或文件不存在：\n" + failedUrl);
+    });
+
+    // 背景点击关闭
+    overlay.addEventListener("click", function (ev) {
+      if (ev.target === overlay || ev.target === backdrop) {
+        hideOverlay();
+      }
+    });
+
+    // 关闭按钮
+    closeBtn.addEventListener("click", function () {
+      hideOverlay();
+    });
+
+    // Esc 关闭
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") {
+        hideOverlay();
+      }
+    });
+
+    // 拦截图片链接点击（以图片扩展名结尾的 <a href="xxx">）
+    document.addEventListener("click", function (ev) {
+      const a = ev.target.closest && ev.target.closest("a");
+      if (!a) return;
+
+      const href = a.getAttribute("href");
+      if (!href) return;
+
+      const lowerHref = href.toLowerCase();
+      const isImage =
+        lowerHref.endsWith(".png") ||
+        lowerHref.endsWith(".jpg") ||
+        lowerHref.endsWith(".jpeg") ||
+        lowerHref.endsWith(".gif") ||
+        lowerHref.endsWith(".webp") ||
+        lowerHref.endsWith(".bmp") ||
+        lowerHref.endsWith(".svg");
+
+      if (!isImage) return;
+
+      ev.preventDefault();
+
+      const resolvedUrl = a.href; // 此时已经是绝对路径
+      const altText =
+        a.textContent ||
+        a.getAttribute("title") ||
+        a.getAttribute("alt") ||
+        "";
+      showOverlay(resolvedUrl, altText);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    try {
+      setupImageViewerOverlay();
+    } catch (e) {
+      console.error("setupImageViewerOverlay error:", e);
+    }
+  });
+
+  // ===============================
+  // 暴露给 C++ 的渲染入口
+  // ===============================
+  // C++ 调用：window.renderMarkdown(markdown, title, baseUrl)
+  window.renderMarkdown = function (markdown, title, baseUrl) {
     const contentEl = document.getElementById("md-content");
     if (!contentEl) return;
 
-    const html = renderMarkdownToHtml(markdown || "");
+    if (typeof baseUrl === "string" && baseUrl.length > 0) {
+      gMarkdownBaseUrl = baseUrl;
+    } else {
+      gMarkdownBaseUrl = "";
+    }
+
+    const html = renderMarkdownToHtml(markdown);
     contentEl.innerHTML = html || "<p><em>（空文档）</em></p>";
 
     setDocumentTitle(title);

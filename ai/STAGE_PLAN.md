@@ -155,3 +155,111 @@
 - D:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
 - D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.h
 - D:/zhiz-c++/transparent_reader/src/app/MarkdownPage.cpp
+
+
+---
+
+### 2025-11-17 接入 markdown-it 渲染并修复 Markdown 链接解析
+
+**涉及阶段：**  
+- 阶段 6（Markdown 渲染加强）
+- 阶段 7（链接与图片交互）
+
+**触发原因：**
+- 手写的 Markdown 解析器功能有限，且在切到前端渲染后，图片等相对链接会被解释为相对于 `index.html`，导致路径错误；希望对齐 VS Code 等编辑器的成熟方案，同时保留图片浮层交互。
+
+**改动概览：**
+- `resources/web/index.html`
+  - 新增本地 `markdown-it.min.js` 的 `<script>` 引用，为前端提供标准 Markdown 解析能力。
+- `resources/web/main.js`
+  - 改为使用 markdown-it 渲染 Markdown 文本。
+  - 通过自定义 `link_open` / `image` 渲染规则，将所有相对链接转换为基于当前 md 所在目录（baseUrl）的绝对 `file://` 地址。
+  - 保留并集成图片浮层（Lightbox）逻辑，实现点击图片链接在当前页面模态预览、支持关闭按钮 / 背景点击 / Esc 退出，并在加载失败时提示。
+- `src/app/MainWindow.h`
+  - 将 `renderMarkdownInPage` 扩展为接受 `baseUrl` 参数。
+  - 新增 `m_pendingBaseUrl` 字段，用于在 Web 页面尚未加载完成时暂存文档的 baseUrl。
+- `src/app/MainWindow.cpp`
+  - 在构造函数中 `loadFinished` 回调中，加载完成后使用 `m_pendingBaseUrl` 调用新版 `renderMarkdownInPage`，并清理缓存。
+  - 重写 `renderMarkdownInPage`，调用前端 `window.renderMarkdown(markdown, title, baseUrl)`。
+  - 重写 `openMarkdownFile`：
+    - 当启用嵌入式前端时，计算 md 所在目录的 `file:///.../` 作为 baseUrl，页面加载完成后调用前端渲染；否则退回旧的 `basicMarkdownToHtml + setHtml` 渲染路径。
+
+**关键点说明：**
+- 链接解析策略统一为“相对于当前 Markdown 文件目录”，和 GitHub / VS Code 等工具的行为一致，确保 `media/xxx.png` 等路径在项目移动后仍然可用。
+- 前端渲染完全依赖 markdown-it，后续可以方便地加表格、任务列表等扩展，而无需在 C++ 中维护复杂的解析逻辑。
+- 旧的纯 HTML 渲染路径仍然保留为兜底方案，当找不到 `index.html` 或前端初始化失败时不会影响基本阅读能力。
+
+**测试验证：**
+- [ ] 打开包含 `[xxx](media/xxx.png)` 和 `![](media/xxx.png)` 的 Markdown，确认图片以浮层形式弹出并支持三种关闭方式。
+- [ ] 将某张图片重命名或删除，点击对应链接时，确认弹出“图片加载失败或文件不存在”，路径指向 md 同级的 `media` 目录。
+- [ ] 打开包含内部 `.md` 链接和外部 `http/https` 链接的文档，确认内部跳转仍由应用处理，外部链接交给系统浏览器，并能正常返回当前文档。
+- [ ] 在应用启动后立即打开 md（index.html 尚未完全加载），确认页面加载完成后能正确显示内容，且链接/图片路径解析正确。
+
+**后续 TODO：**
+- [ ] 将图片加载失败时的 `alert` 替换为页面内非阻断式提示（toast），进一步优化阅读体验。
+- [ ] 视需求接入 markdown-it 的表格 / 任务列表等插件，对 LearnCpp 文档的渲染效果做专项调优。
+
+---
+
+### 2025-11-17 记住上次打开的 Markdown 目录
+
+**涉及阶段：**  
+- 阶段 5（基础交互优化）
+
+**触发原因：**
+- 每次启动应用后，文件对话框默认始终停在“文档”目录，无法记住上一次成功打开 `.md` 所在的目录，影响使用效率。
+
+**改动概览：**
+- `src/app/MainWindow.cpp`
+  - 在 `MainWindow::openMarkdownFile(const QString &path)` 中，在成功解析 `QFileInfo` 并更新 `m_lastOpenDir` 后，使用 `QSettings("zhiz", "TransparentMdReader")` 将 `ui/lastOpenDir` 写入配置，使得下次启动时构造函数能从配置恢复最近打开目录。
+
+**关键点说明：**
+- 构造函数依然通过 `QSettings` 读取 `ui/lastOpenDir`，并在该路径存在时用作 `m_lastOpenDir`，否则退回到文档目录或用户 Home 目录。
+- 本次修改只增加了写入逻辑，不改变原有 Markdown 渲染路径（无论是 basicMarkdownToHtml 还是嵌入式前端 markdown-it 渲染），不会影响已有的链接、图片等行为。
+
+**测试验证：**
+- [ ] 启动应用后，使用 Ctrl+O 打开任意目录下的 `.md` 文件，关闭应用并重新启动，确认文件对话框默认目录为刚才打开的目录。
+- [ ] 修改为另一个目录再打开 `.md`，重新启动后确认默认目录跟随最新一次打开的目录。
+- [ ] 在目标目录被删除或移动后启动应用，确认程序能正常回退到文档目录或用户 Home 目录，不崩溃。
+
+**后续 TODO：**
+- [ ] 视需求扩展记忆内容，例如记住“最近打开文件列表”或“每个文件的滚动位置”，统一放入状态持久化模块管理。
+
+---
+
+### 2025-11-17 统一 Markdown 内部链接与对话框打开逻辑
+
+**涉及阶段：**  
+- 阶段 5（基础交互与状态）
+- 阶段 6（Markdown 渲染）
+- 阶段 7（链接与跳转）
+
+**触发原因：**
+- 程序启动后首次打开的 Markdown 文档可以正常渲染并通过文内链接跳转，但在跳转到第二篇文档后，再次点击文内 `.md` 链接不再跳转；使用 Ctrl+O 选择其它文件时，界面仍停留在首次通过链接打开的文档。
+
+**改动概览：**
+- `src/app/MainWindow.cpp`
+  - `openMarkdownFileFromDialog()`
+    - 确认通过 `QFileDialog::getOpenFileName` 选择文件后统一调用 `openMarkdownFile(path)`，使用 `m_lastOpenDir` 作为初始目录。
+  - `handleOpenMarkdownUrl(const QUrl &url)`（重写）
+    - 简化为仅处理内部 `.md` 链接：从 `url.path()` 提取文件名，以 `m_currentFilePath` 所在目录为基准拼出目标绝对路径，若文件存在则调用 `openMarkdownFile()` 打开。
+    - 移除对 `url.isLocalFile()` / `isRelative()` / `http(s)` 等复杂分支判断，避免误判为“当前文件”或“非 md 链接”提前返回。
+  - `openMarkdownFile(const QString &path)`（重写）
+    - 每次成功打开时更新 `m_lastOpenDir` 和 `m_currentFilePath`，并通过 `QSettings("zhiz", "TransparentMdReader")` 持久化 `ui/lastOpenDir`。
+    - 使用 `basicMarkdownToHtml` 将 Markdown 转为 HTML，并以 `QUrl::fromLocalFile(path)` 作为 `baseUrl` 调用 `m_view->setHtml(...)`，保持相对链接（图片 / 内部链接）解析正确。
+    - 移除任何“重复文件不再渲染”的优化逻辑，确保每次调用都重新渲染当前文档。
+
+**关键点说明：**
+- 现在“通过 Ctrl+O 打开文档”和“通过文内链接跳转到其它文档”统一走 `openMarkdownFile()`，保证当前文档路径与最后打开目录始终保持最新。
+- Markdown 内部链接解析策略统一为“当前文档所在目录 + 链接目标文件名”，不再依赖 QWebEngine 生成的完整 `file:///` 路径细节，避免不同跳转路径下 URL 形式不一致导致的误判。
+
+**测试验证：**
+- [ ] 启动应用，通过 Ctrl+O 打开 A.md，确认渲染正常、链接高亮存在。
+- [ ] 在 A.md 内点击指向 B.md 的链接，确认成功跳转到 B，窗口标题与内容更新。
+- [ ] 在 B.md 内点击指向 C.md 或返回 A.md 的链接，确认可以连续跳转多次。
+- [ ] 在任意时刻使用 Ctrl+O 打开新的 md，确认界面切换到所选文档，不再停留在之前通过链接打开的文件。
+- [ ] 点击文内 http/https 链接时，确认由默认浏览器打开，阅读器仍停留在当前文档。
+
+**后续 TODO：**
+- [ ] 在该基础上继续接入前端 markdown-it 渲染管线，将 `openMarkdownFile()` 的渲染部分替换为调用 `renderMarkdownInPage()`，统一走 index.html + main.js 的前端方案。
+- [ ] 在状态持久化模块中进一步扩展“最近打开文档列表”和“滚动位置记忆”等功能。
