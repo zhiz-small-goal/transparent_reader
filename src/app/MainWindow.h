@@ -7,6 +7,8 @@
 
 QT_BEGIN_NAMESPACE
 class QWebEngineView;
+class QDragEnterEvent;
+class QDropEvent;
 QT_END_NAMESPACE
 
 class ImageOverlay;                    // NEW 前向声明
@@ -21,6 +23,10 @@ public:
 
     // 打开指定 Markdown 文件
     void openMarkdownFile(const QString &path);
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private slots:
     // Ctrl+O 打开文件对话框

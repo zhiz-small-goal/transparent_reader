@@ -10,6 +10,9 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QMouseEvent>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
 #include <QPoint>
 #include <QShortcut>
 #include <QStandardPaths>
@@ -394,6 +397,7 @@ MainWindow::MainWindow(QWidget *parent)
                    | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setWindowOpacity(0.92);
+    setAcceptDrops(true);
 
     resize(720, 900);
     setMinimumSize(480, 600);
@@ -412,6 +416,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // WebEngine 区域
     m_view = new QWebEngineView(central);
+    m_view->setAcceptDrops(false);   // 由 MainWindow 统一处理拖拽打开
     layout->addWidget(m_view, 1);
 
     // 使用自定义 QWebEnginePage（MarkdownPage）拦截链接点击
@@ -490,9 +495,74 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() = default;
 
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (!event) {
+        return;
+    }
 
+    const QMimeData *mimeData = event->mimeData();
+    if (!mimeData || !mimeData->hasUrls()) {
+        QMainWindow::dragEnterEvent(event);
+        return;
+    }
 
+    const auto urls = mimeData->urls();
+    for (const QUrl &url : urls) {
+        if (!url.isLocalFile()) {
+            continue;
+        }
 
+        const QString filePath = url.toLocalFile();
+        if (filePath.isEmpty()) {
+            continue;
+        }
+
+        const QString lower = filePath.toLower();
+        if (lower.endsWith(".md") || lower.endsWith(".markdown")) {
+            event->acceptProposedAction();
+            return;
+        }
+    }
+
+    QMainWindow::dragEnterEvent(event);
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    if (!event) {
+        return;
+    }
+
+    const QMimeData *mimeData = event->mimeData();
+    if (!mimeData || !mimeData->hasUrls()) {
+        QMainWindow::dropEvent(event);
+        return;
+    }
+
+    const auto urls = mimeData->urls();
+    for (const QUrl &url : urls) {
+        if (!url.isLocalFile()) {
+            continue;
+        }
+
+        const QString filePath = url.toLocalFile();
+        if (filePath.isEmpty()) {
+            continue;
+        }
+
+        const QString lower = filePath.toLower();
+        if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
+            continue;
+        }
+
+        event->acceptProposedAction();
+        openMarkdownFile(filePath);
+        return;
+    }
+
+    QMainWindow::dropEvent(event);
+}
 
 // 文件：src/app/MainWindow.cpp
 // 说明：处理文内 .md 链接的点击（由 MarkdownPage::openMarkdown 信号触发）
