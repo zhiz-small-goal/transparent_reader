@@ -263,3 +263,9 @@
 **后续 TODO：**
 - [ ] 在该基础上继续接入前端 markdown-it 渲染管线，将 `openMarkdownFile()` 的渲染部分替换为调用 `renderMarkdownInPage()`，统一走 index.html + main.js 的前端方案。
 - [ ] 在状态持久化模块中进一步扩展“最近打开文档列表”和“滚动位置记忆”等功能。
+
+---
+
+
+
+
