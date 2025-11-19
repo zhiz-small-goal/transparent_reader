@@ -1,31 +1,34 @@
 #include "MainWindow.h"
 #include "MarkdownPage.h"
 
+#include <QAction>
 #include <QCoreApplication>
 #include <QDir>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMenu>
 #include <QMessageBox>
-#include <QMouseEvent>
-#include <QDragEnterEvent>
-#include <QDropEvent>
 #include <QMimeData>
+#include <QMouseEvent>
 #include <QPoint>
+#include <QRegularExpression>
+#include <QSettings>
 #include <QShortcut>
 #include <QStandardPaths>
-#include <QSettings>
 #include <QTextStream>
+#include <QTimer>
 #include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <QWebEnginePage>
 #include <QWebEngineView>
 #include <QWidget>
-#include <QRegularExpression>
 #include <QDesktopServices>
-#include <QTimer>
 
 
 
@@ -417,6 +420,9 @@ MainWindow::MainWindow(QWidget *parent)
     // WebEngine 区域
     m_view = new QWebEngineView(central);
     m_view->setAcceptDrops(false);   // 由 MainWindow 统一处理拖拽打开
+    m_view->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_view, &QWidget::customContextMenuRequested,
+            this, &MainWindow::showContextMenu);
     layout->addWidget(m_view, 1);
 
     // 使用自定义 QWebEnginePage（MarkdownPage）拦截链接点击
@@ -425,8 +431,18 @@ MainWindow::MainWindow(QWidget *parent)
     connect(page, &MarkdownPage::openMarkdown,
             this, &MainWindow::handleOpenMarkdownUrl);
 
-    connect(page, &MarkdownPage::openImage,              
-        this, &MainWindow::handleOpenImageUrl);      
+    connect(page, &MarkdownPage::openImage,
+            this, &MainWindow::handleOpenImageUrl);
+
+    m_backAction = new QAction(tr("后退"), this);
+    m_backAction->setEnabled(false);
+    connect(m_backAction, &QAction::triggered,
+            this, &MainWindow::goBack);
+
+    m_forwardAction = new QAction(tr("前进"), this);
+    m_forwardAction->setEnabled(false);
+    connect(m_forwardAction, &QAction::triggered,
+            this, &MainWindow::goForward);
 
 
     setCentralWidget(central);
@@ -485,6 +501,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto *openShortcut = new QShortcut(QKeySequence::Open, this);
     connect(openShortcut, &QShortcut::activated,
             this, &MainWindow::openMarkdownFileFromDialog);
+
+    updateNavigationActions();
 
     if (!startupFilePath.isEmpty()) {
         QTimer::singleShot(0, this, [this, startupFilePath]() {
@@ -562,6 +580,90 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
 
     QMainWindow::dropEvent(event);
+}
+
+bool MainWindow::canGoBack() const
+{
+    return m_historyIndex > 0
+        && m_historyIndex < m_history.size();
+}
+
+bool MainWindow::canGoForward() const
+{
+    return m_historyIndex >= 0
+        && m_historyIndex < m_history.size() - 1;
+}
+
+void MainWindow::updateNavigationActions()
+{
+    if (m_backAction) {
+        m_backAction->setEnabled(canGoBack());
+    }
+    if (m_forwardAction) {
+        m_forwardAction->setEnabled(canGoForward());
+    }
+}
+
+void MainWindow::goBack()
+{
+    if (!canGoBack()) {
+        updateNavigationActions();
+        return;
+    }
+
+    const int targetIndex = m_historyIndex - 1;
+    const QString targetPath = m_history.at(targetIndex);
+    if (openMarkdownFile(targetPath, false)) {
+        m_historyIndex = targetIndex;
+    }
+    updateNavigationActions();
+}
+
+void MainWindow::goForward()
+{
+    if (!canGoForward()) {
+        updateNavigationActions();
+        return;
+    }
+
+    const int targetIndex = m_historyIndex + 1;
+    const QString targetPath = m_history.at(targetIndex);
+    if (openMarkdownFile(targetPath, false)) {
+        m_historyIndex = targetIndex;
+    }
+    updateNavigationActions();
+}
+
+void MainWindow::showContextMenu(const QPoint &pos)
+{
+    if (!m_view) {
+        return;
+    }
+
+    QMenu menu(this);
+    if (m_backAction) {
+        menu.addAction(m_backAction);
+    }
+    if (m_forwardAction) {
+        menu.addAction(m_forwardAction);
+    }
+
+    menu.addSeparator();
+
+    static const QWebEnginePage::WebAction kDefaultActions[] = {
+        QWebEnginePage::Copy,
+        QWebEnginePage::Paste,
+        QWebEnginePage::SelectAll
+    };
+
+    for (QWebEnginePage::WebAction actionId : kDefaultActions) {
+        QAction *action = m_view->pageAction(actionId);
+        if (action) {
+            menu.addAction(action);
+        }
+    }
+
+    menu.exec(m_view->mapToGlobal(pos));
 }
 
 // 文件：src/app/MainWindow.cpp
@@ -709,9 +811,9 @@ void MainWindow::openMarkdownFileFromDialog()   // NEW
 
 // 文件：src/app/MainWindow.cpp
 // 读取指定 .md 并渲染显示（当前仍使用 basicMarkdownToHtml 占位渲染）
-void MainWindow::openMarkdownFile(const QString &path)
+bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
 {
-    if (!m_view) return;
+    if (!m_view) return false;
 
     QFileInfo fi(path);
     if (!fi.exists() || !fi.isFile()) {
@@ -719,7 +821,7 @@ void MainWindow::openMarkdownFile(const QString &path)
             this,
             QStringLiteral("打开失败"),
             QStringLiteral("找不到文件：\n%1").arg(path));
-        return;
+        return false;
     }
 
     // 记录路径
@@ -740,7 +842,7 @@ void MainWindow::openMarkdownFile(const QString &path)
             this,
             QStringLiteral("打开失败"),
             QStringLiteral("无法打开文件：\n%1").arg(path));
-        return;
+        return false;
     }
 
     QTextStream in(&file);
@@ -751,6 +853,17 @@ void MainWindow::openMarkdownFile(const QString &path)
 #endif
     QString markdown = in.readAll();
     file.close();
+
+    if (addToHistory) {
+        while (m_history.size() > m_historyIndex + 1) {
+            m_history.removeLast();
+        }
+        if (m_history.isEmpty() || m_history.last() != m_currentFilePath) {
+            m_history.append(m_currentFilePath);
+        }
+        m_historyIndex = m_history.size() - 1;
+        updateNavigationActions();
+    }
 
     // 准备传给前端的 baseUrl
     QUrl baseUrl = QUrl::fromLocalFile(fi.absolutePath() + "/");
@@ -764,10 +877,11 @@ void MainWindow::openMarkdownFile(const QString &path)
         m_pendingBaseUrl  = baseUrl.toString();
 
         m_view->setUrl(index);
-        return;
+        return true;
     }
 
     // 前端已就绪：直接渲染
     renderMarkdownInPage(markdown, fi.fileName(), baseUrl);
     setWindowTitle(QStringLiteral("TransparentMdReader - %1").arg(fi.fileName()));
+    return true;
 }

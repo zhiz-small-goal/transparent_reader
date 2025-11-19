@@ -807,7 +807,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 本章定义 **Markdown → HTML → WebEngineView** 的完整渲染方案，参考 Qt 官方 *WebEngine Markdown Editor* 示例与 Qt 文档，结合 `marked.js` 实现稳定、可扩展的渲染管线。 
 
 ---
-# 后续补充：
+## 后续补充：
 
 - 所有内部链接统一写成 GitHub 风格：
 - [标题](相对路径.md)，路径相对于当前文档或仓库根目录。

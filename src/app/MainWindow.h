@@ -3,15 +3,17 @@
 
 #include <QMainWindow>
 #include <QString>
+#include <QStringList>
 #include <QUrl>
 
 QT_BEGIN_NAMESPACE
-class QWebEngineView;
+class QAction;
 class QDragEnterEvent;
 class QDropEvent;
+class QWebEngineView;
 QT_END_NAMESPACE
 
-class ImageOverlay;                    // NEW 前向声明
+class ImageOverlay;
 
 class MainWindow : public QMainWindow
 {
@@ -21,41 +23,44 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
-    // 打开指定 Markdown 文件
-    void openMarkdownFile(const QString &path);
+    bool openMarkdownFile(const QString &path, bool addToHistory = true);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 
 private slots:
-    // Ctrl+O 打开文件对话框
     void openMarkdownFileFromDialog();
-    
-
-    // Web 页面里点击内部 .md 链接时调用
     void handleOpenMarkdownUrl(const QUrl &url);
-
-    void handleOpenImageUrl(const QUrl &url); 
+    void handleOpenImageUrl(const QUrl &url);
+    void goBack();
+    void goForward();
+    void showContextMenu(const QPoint &pos);
 
 private:
-    // 把 markdown 文本送进 WebEngine（以后切到 marked.js 也会用）
     void renderMarkdownInPage(const QString &markdown,
                               const QString &title,
                               const QUrl    &baseUrl);
+    bool canGoBack() const;
+    bool canGoForward() const;
+    void updateNavigationActions();
 
 private:
     QWebEngineView *m_view = nullptr;
     ImageOverlay   *m_imageOverlay = nullptr;
 
-    QString m_lastOpenDir;        // 最近打开目录
-    QString m_currentFilePath;    // 当前 md 文件绝对路径
+    QString m_lastOpenDir;
+    QString m_currentFilePath;
+    QStringList m_history;
+    int m_historyIndex = -1;
+    QAction *m_backAction = nullptr;
+    QAction *m_forwardAction = nullptr;
 
     bool    m_useEmbeddedViewer = false;
     bool    m_pageLoaded        = false;
     QString m_pendingMarkdown;
     QString m_pendingTitle;
-    QString m_pendingBaseUrl;     // NEW：待渲染文档的 baseUrl
+    QString m_pendingBaseUrl;
 };
 
 #endif // TRANSPARENTMDREADER_MAINWINDOW_H
