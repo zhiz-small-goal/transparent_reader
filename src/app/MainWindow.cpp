@@ -22,6 +22,7 @@
 #include <QWidget>
 #include <QRegularExpression>
 #include <QDesktopServices>
+#include <QTimer>
 
 
 
@@ -427,7 +428,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化“最后打开目录”：优先用文档目录，其次 home 目录，然后看配置
     QSettings settings("zhiz", "TransparentMdReader");
-    const QString savedDir = settings.value("ui/lastOpenDir").toString();
+    const QString savedDir  = settings.value("ui/lastOpenDir").toString();
+    const QString savedFile = settings.value("ui/lastFilePath").toString();
 
     QString defaultDir =
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
@@ -439,6 +441,14 @@ MainWindow::MainWindow(QWidget *parent)
         m_lastOpenDir = savedDir;
     } else {
         m_lastOpenDir = defaultDir;
+    }
+
+    QString startupFilePath;
+    if (!savedFile.isEmpty()) {
+        QFileInfo savedFileInfo(savedFile);
+        if (savedFileInfo.exists() && savedFileInfo.isFile()) {
+            startupFilePath = savedFileInfo.absoluteFilePath();
+        }
     }
 
     // 文件：src/app/MainWindow.cpp （构造函数内部）
@@ -470,6 +480,12 @@ MainWindow::MainWindow(QWidget *parent)
     auto *openShortcut = new QShortcut(QKeySequence::Open, this);
     connect(openShortcut, &QShortcut::activated,
             this, &MainWindow::openMarkdownFileFromDialog);
+
+    if (!startupFilePath.isEmpty()) {
+        QTimer::singleShot(0, this, [this, startupFilePath]() {
+            openMarkdownFile(startupFilePath);
+        });
+    }
 }
 
 MainWindow::~MainWindow() = default;
@@ -644,6 +660,7 @@ void MainWindow::openMarkdownFile(const QString &path)
     {
         QSettings settings("zhiz", "TransparentMdReader");
         settings.setValue("ui/lastOpenDir", m_lastOpenDir);
+        settings.setValue("ui/lastFilePath", m_currentFilePath);
     }
 
     // 读取 Markdown 文本
