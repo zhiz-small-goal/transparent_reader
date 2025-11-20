@@ -405,7 +405,7 @@ private:
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    // 无边框 + 置顶 + 透明
+    // 无边框 + 置顶 + 透明背景
     setWindowFlags(windowFlags()
                    | Qt::FramelessWindowHint
                    | Qt::WindowStaysOnTopHint);
@@ -415,7 +415,7 @@ MainWindow::MainWindow(QWidget *parent)
     resize(720, 900);
     setMinimumSize(480, 600);
 
-    // 中央容器：上面标题栏，下面 QWebEngineView
+    // 中央容器：只放 WebEngine 区域
     auto *central = new QWidget(this);
     central->setAttribute(Qt::WA_TranslucentBackground);
 
@@ -423,7 +423,6 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setContentsMargins(8, 8, 8, 8);
     layout->setSpacing(0);
 
-    // 只保留 WebEngine 区域
     m_view = new QWebEngineView(central);
     m_view->setContextMenuPolicy(Qt::NoContextMenu);
     m_view->installEventFilter(this);
@@ -431,21 +430,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(central);
 
-    // 初始化穿透状态（默认 false）
-    updateClickThroughState();
-
-
-    // WebEngine 区域
-    m_view = new QWebEngineView(central);
-    m_view->setContextMenuPolicy(Qt::NoContextMenu);  // NEW：禁用默认右键菜单
-    m_view->installEventFilter(this);                 // NEW：由 MainWindow 统一拦截鼠标事件
-    layout->addWidget(m_view, 1);
-
-        // 创建浮动按钮条（Settings / X），叠在 MainWindow 上方
+    // 创建浮动按钮条（Settings / X），叠在 MainWindow 上方
     m_titleBar = new TitleBar(this);
     m_titleBar->syncFromWindowLockState(m_locked);
     m_titleBar->syncWithMainWindow();
     m_titleBar->show();
+
 
 
     // 使用自定义 QWebEnginePage（MarkdownPage）拦截链接点击
@@ -933,10 +923,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)   // NEW
         if (event->type() == QEvent::MouseButtonPress) {
             auto *me = static_cast<QMouseEvent *>(event);
             if (me->button() == Qt::RightButton) {
-                // 如果你有 m_locked 之类的标志，可以在这里限制为未锁定时才处理：
-                // if (m_locked) {
-                //     return false; // 锁定状态先不处理右键（后续再设计更高级版本）
-                // }
+
+                if (m_locked) {
+                    // 锁定状态下不处理右键翻页（此时窗口本身大多已经穿透）
+                    return false;
+                }
 
                 const int h = m_view->height();
                 const int y = static_cast<int>(me->position().y());
@@ -948,40 +939,41 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)   // NEW
                     scrollPageDown();
                 }
 
-                return true; // 吃掉事件，不再让 WebView 弹 ContextMenu
-            }
-        }
-
-        // 整窗拖动：未锁定时，任意区域按住左键拖动窗口
-        if (event->type() == QEvent::MouseButtonPress) {
-            auto *me = static_cast<QMouseEvent *>(event);
-            if (me->button() == Qt::LeftButton) {
-                // 如果你有 m_locked 标志，在锁定模式下这里直接放行
-                // if (m_locked) {
-                //     return false;
-                // }
-
-                // 记录起始拖动位置（相对全局）
-                m_dragStartPos = me->globalPosition().toPoint();  // 需要在 MainWindow.h 中增加 QPoint m_dragStartPos; // NEW
-                m_dragging = true;                                // 需要在 MainWindow.h 中增加 bool m_dragging = false; // NEW
-                return true;
-            }
-        } else if (event->type() == QEvent::MouseMove) {
-            auto *me = static_cast<QMouseEvent *>(event);
-            if (m_dragging) {
-                const QPoint globalPos = me->globalPosition().toPoint();
-                const QPoint delta = globalPos - m_dragStartPos;
-                m_dragStartPos = globalPos;
-                move(pos() + delta);
-                return true;
-            }
-        } else if (event->type() == QEvent::MouseButtonRelease) {
-            auto *me = static_cast<QMouseEvent *>(event);
-            if (me->button() == Qt::LeftButton && m_dragging) {
-                m_dragging = false;
                 return true;
             }
         }
+
+
+        // // 整窗拖动：未锁定时，任意区域按住左键拖动窗口
+        // if (event->type() == QEvent::MouseButtonPress) {
+        //     auto *me = static_cast<QMouseEvent *>(event);
+        //     if (me->button() == Qt::LeftButton) {
+        //         // 如果你有 m_locked 标志，在锁定模式下这里直接放行
+        //         // if (m_locked) {
+        //         //     return false;
+        //         // }
+
+        //         // 记录起始拖动位置（相对全局）
+        //         m_dragStartPos = me->globalPosition().toPoint();  // 需要在 MainWindow.h 中增加 QPoint m_dragStartPos; // NEW
+        //         m_dragging = true;                                // 需要在 MainWindow.h 中增加 bool m_dragging = false; // NEW
+        //         return true;
+        //     }
+        // } else if (event->type() == QEvent::MouseMove) {
+        //     auto *me = static_cast<QMouseEvent *>(event);
+        //     if (m_dragging) {
+        //         const QPoint globalPos = me->globalPosition().toPoint();
+        //         const QPoint delta = globalPos - m_dragStartPos;
+        //         m_dragStartPos = globalPos;
+        //         move(pos() + delta);
+        //         return true;
+        //     }
+        // } else if (event->type() == QEvent::MouseButtonRelease) {
+        //     auto *me = static_cast<QMouseEvent *>(event);
+        //     if (me->button() == Qt::LeftButton && m_dragging) {
+        //         m_dragging = false;
+        //         return true;
+        //     }
+        // }
     }
 
     // 其他情况交给基类处理

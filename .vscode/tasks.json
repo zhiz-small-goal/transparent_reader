@@ -2,6 +2,21 @@
   "version": "2.0.0",
   "tasks": [
     {
+      // ① 先配置 / 生成工程（无论 build 目录在不在，都安全）
+      "label": "cmake-configure",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-S", ".",
+        "-B", "build",
+        "-G", "Visual Studio 17 2022",
+        "-A", "x64",
+        "-DCMAKE_PREFIX_PATH=C:/Qt/6.8.3/msvc2022_64"
+      ],
+      "problemMatcher": []
+    },
+    {
+      // ② 再编译 Debug
       "label": "cmake-build-debug",
       "type": "shell",
       "command": "cmake",
@@ -13,7 +28,9 @@
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": []
+      // 关键：build 前自动跑 configure
+      "dependsOn": "cmake-configure",
+      "problemMatcher": "$msCompile"
     }
   ]
 }
