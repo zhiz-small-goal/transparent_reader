@@ -29,6 +29,32 @@
 #include <QWebEngineView>
 #include <QWidget>
 #include <QDesktopServices>
+#include <QEvent>
+
+#ifdef Q_OS_WIN                    // Windows 原生消息处理
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  include <windowsx.h>           // GET_X_LPARAM / GET_Y_LPARAM
+
+// 给任意 QWidget 开/关鼠标穿透（只改 WS_EX_TRANSPARENT）
+static void setWindowClickThrough(QWidget *w, bool enabled)
+{
+    if (!w) return;
+
+    HWND hwnd = reinterpret_cast<HWND>(w->winId());
+    if (!hwnd) return;
+
+    LONG_PTR ex = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+    if (enabled) {
+        ex |= WS_EX_TRANSPARENT;      // 鼠标命中时当自己不存在
+    } else {
+        ex &= ~WS_EX_TRANSPARENT;
+    }
+    SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex);
+}
+#endif
+
+
 
 
 
@@ -138,126 +164,112 @@ QString toJsStringLiteral(const QString &str)
     return "'" + s + "'";
 }
 
-// ================= 自定义标题栏（可拖动 + 按钮） =================
+
+// ================= 图片查看浮层（半透明背景 + 右上角关闭） =================
+
+
+} // namespace
+
+class MainWindow;   // 前向声明
+
+// ================= 浮动按钮条：Settings + X =================
 class TitleBar : public QWidget
 {
 public:
-    explicit TitleBar(QWidget *parent = nullptr)
-        : QWidget(parent)
+    explicit TitleBar(MainWindow *owner)
+        : QWidget(nullptr)
+        , m_mainWindow(owner)
     {
-        setAttribute(Qt::WA_StyledBackground, true);
-        setStyleSheet(
-            "background-color: rgba(255, 255, 255, 40);"
-            "border-bottom: 1px solid rgba(255, 255, 255, 80);"
-        );
-
+        // 顶层小工具窗，始终在最前，不占任务栏
+        setWindowFlags(Qt::FramelessWindowHint
+                       | Qt::Tool
+                       | Qt::WindowStaysOnTopHint);
+        setAttribute(Qt::WA_TranslucentBackground);
         setFixedHeight(32);
 
         auto *layout = new QHBoxLayout(this);
-        layout->setContentsMargins(8, 4, 8, 4);
+        layout->setContentsMargins(8, 0, 8, 0);
         layout->setSpacing(6);
 
-        auto *titleLabel =
-            new QLabel(QStringLiteral("TransparentMdReader"), this);
-        titleLabel->setStyleSheet("color: white;");
-        layout->addWidget(titleLabel);
-        layout->addStretch(1);
+        auto *iconLabel = new QLabel(this);
+        iconLabel->setText(u8"📄");
+        layout->addWidget(iconLabel);
 
-        auto makeButton = [this](const QString &text, const QString &tooltip) {
-            auto *btn = new QToolButton(this);
-            btn->setText(text);
-            btn->setToolTip(tooltip);
-            btn->setAutoRaise(true);
-            btn->setCursor(Qt::PointingHandCursor);
-            btn->setStyleSheet(
-                "QToolButton {"
-                "  color: white;"
-                "  background-color: transparent;"
-                "  padding: 2px 6px;"
-                "}"
-                "QToolButton:hover {"
-                "  background-color: rgba(255, 255, 255, 30);"
-                "}"
-            );
-            return btn;
-        };
+        auto *titleLabel = new QLabel(this);
+        titleLabel->setText(QStringLiteral("TransparentMdReader"));
+        layout->addWidget(titleLabel, 1);
 
-        auto *minBtn   = makeButton(QStringLiteral("−"),
-                                    QStringLiteral("最小化"));
-        m_lockBtn      = makeButton(QStringLiteral("🔓"),
-                                    QStringLiteral("点击锁定窗口（禁止拖动）"));
-        auto *cfgBtn   = makeButton(QStringLiteral("⚙"),
-                                    QStringLiteral("设置"));
-        auto *closeBtn = makeButton(QStringLiteral("×"),
-                                    QStringLiteral("关闭"));
+        // Settings 按钮
+        m_settingsButton = new QToolButton(this);
+        m_settingsButton->setText(QStringLiteral("Settings"));
+        layout->addWidget(m_settingsButton);
 
-        layout->addWidget(minBtn);
-        layout->addWidget(m_lockBtn);
-        layout->addWidget(cfgBtn);
-        layout->addWidget(closeBtn);
+        // 关闭按钮
+        m_closeButton = new QToolButton(this);
+        m_closeButton->setText(QStringLiteral("✕"));
+        m_closeButton->setToolTip(QStringLiteral("关闭阅读器"));
+        layout->addWidget(m_closeButton);
 
-        connect(minBtn, &QToolButton::clicked, this, [this]() {
-            if (QWidget *win = window()) {
-                win->showMinimized();
+        connect(m_closeButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->close();
             }
+            close();
         });
 
-        connect(m_lockBtn, &QToolButton::clicked, this, [this]() {
-            m_locked = !m_locked;
-            if (m_locked) {
-                m_lockBtn->setText(QStringLiteral("🔒"));
-                m_lockBtn->setToolTip(
-                    QStringLiteral("已锁定：点击解锁窗口（允许拖动）"));
-            } else {
-                m_lockBtn->setText(QStringLiteral("🔓"));
-                m_lockBtn->setToolTip(
-                    QStringLiteral("已解锁：点击锁定窗口（禁止拖动）"));
-            }
-        });
-
-        connect(cfgBtn, &QToolButton::clicked, this, [this]() {
-            QMessageBox::information(
-                window(),
-                QStringLiteral("设置"),
-                QStringLiteral(
-                    "设置界面尚未实现。\n\n"
-                    "后续会在这里添加 TransparentMdReader 的配置选项。"));
-        });
-
-        connect(closeBtn, &QToolButton::clicked, this, [this]() {
-            if (QWidget *win = window()) {
-                win->close();
-            }
+        connect(m_settingsButton, &QToolButton::clicked, this, [this]() {
+            QMessageBox::information(this,
+                                     QStringLiteral("Settings"),
+                                     QStringLiteral("这里将来可以打开设置窗口（当前为占位逻辑）。"));
         });
     }
 
+    // 根据锁定状态调整提示文本（不再显示 🔒 / 🔓）
+    void syncFromWindowLockState(bool locked)
+    {
+        if (!m_settingsButton) return;
+        if (locked) {
+            m_settingsButton->setToolTip(
+                QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁。"));
+        } else {
+            m_settingsButton->setToolTip(
+                QStringLiteral("当前已解锁。松开 Ctrl 恢复锁定（穿透）。"));
+        }
+    }
+
+    // 同步自己的位置到 MainWindow 顶部
+    void syncWithMainWindow()
+    {
+        if (!m_mainWindow) return;
+        const QRect frame = m_mainWindow->frameGeometry();
+        setFixedWidth(frame.width());
+        // 叠在主窗口上边缘（你可以改成 frame.top() + 2 之类微调）
+        move(frame.left(), frame.top() - height());
+    }
+
 protected:
+    // 只在解锁状态时支持拖动整个阅读器窗口
     void mousePressEvent(QMouseEvent *event) override
     {
-        if (event->button() == Qt::LeftButton && !m_locked) {
-            m_dragging = true;
-            if (QWidget *win = window()) {
-                m_dragOffset =
-                    event->globalPosition().toPoint()
-                    - win->frameGeometry().topLeft();
-            }
+        if (event->button() == Qt::LeftButton && m_mainWindow && !m_mainWindow->isLocked()) {
+            m_dragging  = true;
+            m_dragPos   = event->globalPosition().toPoint();
+            m_windowPos = m_mainWindow->frameGeometry().topLeft();
             event->accept();
-        } else {
-            QWidget::mousePressEvent(event);
+            return;
         }
+        QWidget::mousePressEvent(event);
     }
 
     void mouseMoveEvent(QMouseEvent *event) override
     {
-        if (m_dragging && !m_locked) {
-            if (QWidget *win = window()) {
-                const QPoint globalPos = event->globalPosition().toPoint();
-                win->move(globalPos - m_dragOffset);
-            }
+        if (m_dragging && m_mainWindow && !m_mainWindow->isLocked()) {
+            const QPoint delta = event->globalPosition().toPoint() - m_dragPos;
+            m_mainWindow->move(m_windowPos + delta);
             event->accept();
-        } else {
-            QWidget::mouseMoveEvent(event);
+            return;
         }
+        QWidget::mouseMoveEvent(event);
     }
 
     void mouseReleaseEvent(QMouseEvent *event) override
@@ -265,22 +277,20 @@ protected:
         if (event->button() == Qt::LeftButton && m_dragging) {
             m_dragging = false;
             event->accept();
-        } else {
-            QWidget::mouseReleaseEvent(event);
+            return;
         }
+        QWidget::mouseReleaseEvent(event);
     }
 
 private:
-    bool         m_dragging   = false;
-    bool         m_locked     = false;
-    QPoint       m_dragOffset;
-    QToolButton *m_lockBtn    = nullptr;
+    MainWindow  *m_mainWindow     = nullptr;
+    bool         m_dragging       = false;
+    QPoint       m_dragPos;
+    QPoint       m_windowPos;
+    QToolButton *m_settingsButton = nullptr;
+    QToolButton *m_closeButton    = nullptr;
 };
 
-// ================= 图片查看浮层（半透明背景 + 右上角关闭） =================
-
-
-} // namespace
 
 class ImageOverlay : public QWidget      // NEW
 {
@@ -391,6 +401,7 @@ private:
 
 // ================= MainWindow 实现 =================
 
+// 文件：src/app/MainWindow.cpp（构造函数）
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -400,7 +411,6 @@ MainWindow::MainWindow(QWidget *parent)
                    | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setWindowOpacity(0.92);
-    setAcceptDrops(true);
 
     resize(720, 900);
     setMinimumSize(480, 600);
@@ -408,22 +418,35 @@ MainWindow::MainWindow(QWidget *parent)
     // 中央容器：上面标题栏，下面 QWebEngineView
     auto *central = new QWidget(this);
     central->setAttribute(Qt::WA_TranslucentBackground);
-    central->setAutoFillBackground(false);
 
     auto *layout = new QVBoxLayout(central);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(8, 8, 8, 8);
     layout->setSpacing(0);
 
-    auto *titleBar = new TitleBar(central);
-    layout->addWidget(titleBar);
+    // 只保留 WebEngine 区域
+    m_view = new QWebEngineView(central);
+    m_view->setContextMenuPolicy(Qt::NoContextMenu);
+    m_view->installEventFilter(this);
+    layout->addWidget(m_view, 1);
+
+    setCentralWidget(central);
+
+    // 初始化穿透状态（默认 false）
+    updateClickThroughState();
+
 
     // WebEngine 区域
     m_view = new QWebEngineView(central);
-    m_view->setAcceptDrops(false);   // 由 MainWindow 统一处理拖拽打开
-    m_view->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_view, &QWidget::customContextMenuRequested,
-            this, &MainWindow::showContextMenu);
+    m_view->setContextMenuPolicy(Qt::NoContextMenu);  // NEW：禁用默认右键菜单
+    m_view->installEventFilter(this);                 // NEW：由 MainWindow 统一拦截鼠标事件
     layout->addWidget(m_view, 1);
+
+        // 创建浮动按钮条（Settings / X），叠在 MainWindow 上方
+    m_titleBar = new TitleBar(this);
+    m_titleBar->syncFromWindowLockState(m_locked);
+    m_titleBar->syncWithMainWindow();
+    m_titleBar->show();
+
 
     // 使用自定义 QWebEnginePage（MarkdownPage）拦截链接点击
     auto *page = new MarkdownPage(m_view);
@@ -434,23 +457,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(page, &MarkdownPage::openImage,
             this, &MainWindow::handleOpenImageUrl);
 
-    m_backAction = new QAction(tr("后退"), this);
-    m_backAction->setEnabled(false);
-    connect(m_backAction, &QAction::triggered,
-            this, &MainWindow::goBack);
-
-    m_forwardAction = new QAction(tr("前进"), this);
-    m_forwardAction->setEnabled(false);
-    connect(m_forwardAction, &QAction::triggered,
-            this, &MainWindow::goForward);
-
-
     setCentralWidget(central);
 
     // 初始化“最后打开目录”：优先用文档目录，其次 home 目录，然后看配置
     QSettings settings("zhiz", "TransparentMdReader");
-    const QString savedDir  = settings.value("ui/lastOpenDir").toString();
-    const QString savedFile = settings.value("ui/lastFilePath").toString();
+    const QString savedDir = settings.value("ui/lastOpenDir").toString();
 
     QString defaultDir =
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
@@ -463,16 +474,6 @@ MainWindow::MainWindow(QWidget *parent)
     } else {
         m_lastOpenDir = defaultDir;
     }
-
-    QString startupFilePath;
-    if (!savedFile.isEmpty()) {
-        QFileInfo savedFileInfo(savedFile);
-        if (savedFileInfo.exists() && savedFileInfo.isFile()) {
-            startupFilePath = savedFileInfo.absoluteFilePath();
-        }
-    }
-
-    // 文件：src/app/MainWindow.cpp （构造函数内部）
 
     const QUrl pageUrl = locateIndexPage();
     if (pageUrl.isValid()) {
@@ -493,25 +494,109 @@ MainWindow::MainWindow(QWidget *parent)
                 });
     } else {
         m_useEmbeddedViewer = false;
-        m_view->setHtml(placeholderHtml());
+        m_pageLoaded        = true;
+
+        // 使用占位 HTML 渲染
+        const QString html = placeholderHtml();
+        m_view->setHtml(html);
     }
 
+    // NEW: Windows 下注册全局热键 Ctrl+Alt+L，用来锁定/解锁
+// #ifdef Q_OS_WIN
+//     {
+//         HWND hwnd = reinterpret_cast<HWND>(winId());  // 确保创建 HWND
+//         if (hwnd) {
+//             // 热键 ID = 1，对应 nativeEvent 里 WM_HOTKEY 分支
+//             // MOD_CONTROL | MOD_ALT + 'L'
+//             RegisterHotKey(hwnd, 1, MOD_CONTROL | MOD_ALT, 'L');
+//         }
+//     }
+// #endif
 
-    // 快捷键：Ctrl+O 打开本地 Markdown 文件
+    // NEW: 启动时默认处于锁定 / 内容穿透模式
+    setLocked(true);
+
+    #ifdef Q_OS_WIN
+    // 每 30ms 轮询一次 Ctrl 键状态：
+    //  - Ctrl 未按下：保持锁定（穿透）
+    //  - Ctrl 按下：临时解锁（可交互）
+    auto *ctrlTimer = new QTimer(this);
+    ctrlTimer->setInterval(30);
+    connect(ctrlTimer, &QTimer::timeout, this, [this]() {
+        SHORT state = GetAsyncKeyState(VK_CONTROL);
+        bool ctrlDown = (state & 0x8000) != 0;
+        bool shouldLocked = !ctrlDown;   // 没按 Ctrl -> 锁定；按住 Ctrl -> 解锁
+
+        if (shouldLocked != m_locked) {
+            setLocked(shouldLocked);
+        }
+    });
+    ctrlTimer->start();
+#endif
+
+    // 这里原来如果有 Ctrl+O 快捷键等，保持不动
     auto *openShortcut = new QShortcut(QKeySequence::Open, this);
     connect(openShortcut, &QShortcut::activated,
             this, &MainWindow::openMarkdownFileFromDialog);
+}
 
-    updateNavigationActions();
 
-    if (!startupFilePath.isEmpty()) {
-        QTimer::singleShot(0, this, [this, startupFilePath]() {
-            openMarkdownFile(startupFilePath);
-        });
+MainWindow::~MainWindow()
+{
+#ifdef Q_OS_WIN
+    // 释放 Ctrl+Alt+L 这个热键（ID = 1）
+    HWND hwnd = reinterpret_cast<HWND>(winId());
+    if (hwnd) {
+        UnregisterHotKey(hwnd, 1);
+    }
+#endif
+}
+
+
+// NEW: 统一处理锁定状态（同步 TitleBar 外观）
+void MainWindow::setLocked(bool locked)
+{
+    if (m_locked == locked) {
+        return;
+    }
+
+    m_locked = locked;
+    updateClickThroughState();
+
+    if (m_titleBar) {
+        m_titleBar->syncFromWindowLockState(m_locked);
     }
 }
 
-MainWindow::~MainWindow() = default;
+void MainWindow::updateClickThroughState()
+{
+#ifdef Q_OS_WIN
+    // 锁定 = 整窗鼠标穿透；解锁 = 正常可交互
+    setWindowClickThrough(this, m_locked);
+#else
+    // 其他平台暂时不做特殊处理
+#endif
+}
+
+
+
+
+
+// NEW: Windows 下通过 WM_NCHITTEST 实现“内容区域点击穿透”
+bool MainWindow::nativeEvent(const QByteArray &eventType,
+                             void *message,
+                             qintptr *result)
+{
+#ifdef Q_OS_WIN
+    Q_UNUSED(eventType)
+    Q_UNUSED(message)
+    Q_UNUSED(result)
+#endif
+    return QMainWindow::nativeEvent(eventType, message, result);
+}
+
+
+
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 {
@@ -806,6 +891,117 @@ void MainWindow::openMarkdownFileFromDialog()   // NEW
     }
 
     openMarkdownFile(path);
+}
+
+// 文件：src/app/MainWindow.cpp
+// 作用：在 Web 页面中向上/向下滚动一屏高度（约 80%）
+
+void MainWindow::scrollPageUp()    // NEW
+{
+    if (!m_view) {
+        return;
+    }
+    // 使用 JavaScript 让页面内容向上滚一屏
+    const QString js = QStringLiteral(
+        "window.scrollBy(0, -window.innerHeight * 0.8);"
+    );
+    m_view->page()->runJavaScript(js);
+}
+
+void MainWindow::scrollPageDown()  // NEW
+{
+    if (!m_view) {
+        return;
+    }
+    // 使用 JavaScript 让页面内容向下滚一屏
+    const QString js = QStringLiteral(
+        "window.scrollBy(0, window.innerHeight * 0.8);"
+    );
+    m_view->page()->runJavaScript(js);
+}
+
+// 文件：src/app/MainWindow.cpp
+// 作用：在未锁定状态下实现：
+//   - 左键拖动整窗
+//   - 右键翻页（上半区上一页，下半区下一页）
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)   // NEW
+{
+    // 只关心 Web 内容区域上的鼠标事件
+    if (obj == m_view) {
+        // 右键翻页
+        if (event->type() == QEvent::MouseButtonPress) {
+            auto *me = static_cast<QMouseEvent *>(event);
+            if (me->button() == Qt::RightButton) {
+                // 如果你有 m_locked 之类的标志，可以在这里限制为未锁定时才处理：
+                // if (m_locked) {
+                //     return false; // 锁定状态先不处理右键（后续再设计更高级版本）
+                // }
+
+                const int h = m_view->height();
+                const int y = static_cast<int>(me->position().y());
+                const bool upperHalf = (y < h / 2);
+
+                if (upperHalf) {
+                    scrollPageUp();
+                } else {
+                    scrollPageDown();
+                }
+
+                return true; // 吃掉事件，不再让 WebView 弹 ContextMenu
+            }
+        }
+
+        // 整窗拖动：未锁定时，任意区域按住左键拖动窗口
+        if (event->type() == QEvent::MouseButtonPress) {
+            auto *me = static_cast<QMouseEvent *>(event);
+            if (me->button() == Qt::LeftButton) {
+                // 如果你有 m_locked 标志，在锁定模式下这里直接放行
+                // if (m_locked) {
+                //     return false;
+                // }
+
+                // 记录起始拖动位置（相对全局）
+                m_dragStartPos = me->globalPosition().toPoint();  // 需要在 MainWindow.h 中增加 QPoint m_dragStartPos; // NEW
+                m_dragging = true;                                // 需要在 MainWindow.h 中增加 bool m_dragging = false; // NEW
+                return true;
+            }
+        } else if (event->type() == QEvent::MouseMove) {
+            auto *me = static_cast<QMouseEvent *>(event);
+            if (m_dragging) {
+                const QPoint globalPos = me->globalPosition().toPoint();
+                const QPoint delta = globalPos - m_dragStartPos;
+                m_dragStartPos = globalPos;
+                move(pos() + delta);
+                return true;
+            }
+        } else if (event->type() == QEvent::MouseButtonRelease) {
+            auto *me = static_cast<QMouseEvent *>(event);
+            if (me->button() == Qt::LeftButton && m_dragging) {
+                m_dragging = false;
+                return true;
+            }
+        }
+    }
+
+    // 其他情况交给基类处理
+    return QMainWindow::eventFilter(obj, event);
+}
+
+void MainWindow::moveEvent(QMoveEvent *event)
+{
+    QMainWindow::moveEvent(event);
+    if (m_titleBar) {
+        m_titleBar->syncWithMainWindow();
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    if (m_titleBar) {
+        m_titleBar->syncWithMainWindow();
+    }
 }
 
 
