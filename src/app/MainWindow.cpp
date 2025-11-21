@@ -181,6 +181,7 @@ QString toJsStringLiteral(const QString &str)
 struct ReaderStyle {
     int   fontPointSize      = 16;                         // 字号（pt）
     QColor fontColor         = QColor(QStringLiteral("#f5f5f5"));  // 接近你占位页的默认颜色
+    qreal fontOpacity        = 1.0;                        // 字体透明度 0.0 ~ 1.0
     QColor backgroundColor   = QColor(45, 44, 44);         // 深灰色背景
     qreal  backgroundOpacity = 0.55;                       // 0.0 ~ 1.0
     bool  showScrollbar      = false;                      // 默认隐藏右侧滚动条
@@ -239,7 +240,7 @@ public:
                     emit styleChanged(m_style);   // 字号改动 -> 立刻通知外面
                 });
 
-        // ===== 背景透明度：20% ~ 100% =====
+        // ===== 背景透明度：0% ~ 100% =====
         m_opacitySlider = new QSlider(Qt::Horizontal, this);
         m_opacitySlider->setRange(0, 100);
         m_opacitySlider->setValue(
@@ -268,6 +269,37 @@ public:
                         QString::number(v) + QStringLiteral("%"));
                     emit styleChanged(m_style);   // 透明度实时生效
                 });
+
+        // ===== 字体透明度：20% ~ 100% =====
+        m_fontOpacitySlider = new QSlider(Qt::Horizontal, this);
+        m_fontOpacitySlider->setRange(20, 100);
+        m_fontOpacitySlider->setValue(
+            static_cast<int>(m_style.fontOpacity * 100.0));
+
+        auto *fontOpacityLabel = new QLabel(this);
+        fontOpacityLabel->setMinimumWidth(40);
+
+        auto updateFontOpacityLabel = [this, fontOpacityLabel]() {
+            const int v = m_fontOpacitySlider->value();
+            fontOpacityLabel->setText(
+                QString::number(v) + QStringLiteral("%"));
+        };
+        updateFontOpacityLabel();
+
+        connect(m_fontOpacitySlider, &QSlider::valueChanged,
+                this, [this, fontOpacityLabel](int v) {
+                    if (v < 20) v = 20;
+                    if (v > 100) v = 100;
+                    m_fontOpacitySlider->blockSignals(true);
+                    m_fontOpacitySlider->setValue(v);
+                    m_fontOpacitySlider->blockSignals(false);
+
+                    m_style.fontOpacity = v / 100.0;
+                    fontOpacityLabel->setText(
+                        QString::number(v) + QStringLiteral("%"));
+                    emit styleChanged(m_style);   // 字体透明度实时生效
+                });
+
 
         // ===== 字体颜色按钮 =====
         m_fontColorButton = new QPushButton(this);
@@ -359,6 +391,15 @@ public:
         // ===== 表单布局 =====
         auto *form = new QFormLayout;
         form->addRow(QStringLiteral("字体大小"), m_fontSizeSpin);
+
+        // 字体透明度一行（滑条 + 百分比标签）
+        auto *fontOpacityRow = new QHBoxLayout;
+        fontOpacityRow->setContentsMargins(0, 0, 0, 0);
+        fontOpacityRow->addWidget(m_fontOpacitySlider, 1);
+        // 注意：这里用的是上面构造函数里创建的 fontOpacityLabel 变量
+        fontOpacityRow->addWidget(fontOpacityLabel);
+        form->addRow(QStringLiteral("字体透明度"), fontOpacityRow);
+
         form->addRow(QStringLiteral("字体颜色"), m_fontColorButton);
         form->addRow(QStringLiteral("背景颜色"), m_backgroundColorButton);
 
@@ -412,7 +453,8 @@ private:
 
     ReaderStyle  m_style;
     QSpinBox    *m_fontSizeSpin          = nullptr;
-    QSlider     *m_opacitySlider         = nullptr;
+    QSlider     *m_fontOpacitySlider     = nullptr;   // 字体透明度
+    QSlider     *m_opacitySlider         = nullptr;   // 背景透明度
     QPushButton *m_fontColorButton       = nullptr;
     QPushButton *m_backgroundColorButton = nullptr;
     QCheckBox   *m_scrollbarCheck        = nullptr;
@@ -593,19 +635,19 @@ public:
 
     // 根据阅读样式同步按钮的颜色 / 透明度
     void applyReaderUiStyle(const ReaderStyle &style)
-    {
-        // 前景色：跟随字体颜色；透明度跟随背景透明度
+{
+        // 前景色：跟随字体颜色；透明度跟随“字体透明度”
         QColor fg = style.fontColor;
-        qreal alpha = style.backgroundOpacity;
+        qreal alpha = style.fontOpacity;
         if (alpha < 0.0) alpha = 0.0;
         if (alpha > 1.0) alpha = 1.0;
         fg.setAlphaF(alpha);
 
         const QString cssColor = QStringLiteral("rgba(%1,%2,%3,%4)")
-                                     .arg(fg.red())
-                                     .arg(fg.green())
-                                     .arg(fg.blue())
-                                     .arg(fg.alphaF());
+                                    .arg(fg.red())
+                                    .arg(fg.green())
+                                    .arg(fg.blue())
+                                    .arg(fg.alphaF());
 
         const QString btnStyle = QStringLiteral(
             "QToolButton {"
@@ -869,6 +911,12 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
+        // 新增：字体透明度
+    g_readerStyle.fontOpacity =
+            settings.value("reader/fontOpacity", 1.0).toDouble();
+    if (g_readerStyle.fontOpacity < 0.2) g_readerStyle.fontOpacity = 0.2;   // 不允许完全看不见
+    if (g_readerStyle.fontOpacity > 1.0) g_readerStyle.fontOpacity = 1.0;
+
     const QString bgColorStr = settings.value("reader/backgroundColor").toString();
     if (!bgColorStr.isEmpty()) {
         const QColor c(bgColorStr);
@@ -993,6 +1041,7 @@ void MainWindow::openSettingsDialog()
                 QSettings settings("zhiz", "TransparentMdReader");
                 settings.setValue("reader/fontPointSize", g_readerStyle.fontPointSize);
                 settings.setValue("reader/fontColor", g_readerStyle.fontColor.name(QColor::HexRgb));
+                settings.setValue("reader/fontOpacity", g_readerStyle.fontOpacity);
                 settings.setValue("reader/backgroundColor", g_readerStyle.backgroundColor.name(QColor::HexRgb));
                 settings.setValue("reader/backgroundOpacity", g_readerStyle.backgroundOpacity);
                 settings.setValue("reader/showScrollbar", g_readerStyle.showScrollbar);
@@ -1005,22 +1054,18 @@ void MainWindow::openSettingsDialog()
 
 void MainWindow::applyReaderStyle()
 {
-    if (!m_view || !m_view->page()) {
-        return;
-    }
+    if (!m_view || !m_view->page()) return;
 
     const QString fontSizeCss =
         QString::number(g_readerStyle.fontPointSize) + QStringLiteral("px");
     const QString fontColorCss =
-        colorToCssRgba(g_readerStyle.fontColor);
+        colorToCssRgba(g_readerStyle.fontColor, g_readerStyle.fontOpacity);
     const QString bgCss =
-        colorToCssRgba(g_readerStyle.backgroundColor,
-                    g_readerStyle.backgroundOpacity);
+        colorToCssRgba(g_readerStyle.backgroundColor, g_readerStyle.backgroundOpacity);
     const QString scrollbarWidthCss =
-        g_readerStyle.showScrollbar
-            ? QStringLiteral("8px")
-            : QStringLiteral("0px");
-
+        g_readerStyle.showScrollbar ? QStringLiteral("8px") : QStringLiteral("0px");
+    const QString overflowCss =
+        g_readerStyle.showScrollbar ? QStringLiteral("overlay") : QStringLiteral("hidden");
 
     const QString js = QStringLiteral(
         "(function(){"
@@ -1028,36 +1073,38 @@ void MainWindow::applyReaderStyle()
         "  var fontColor = '%2';"
         "  var bg = '%3';"
         "  var scrollbarWidth = '%4';"
+        "  var overflowY = '%5';"
         "  var styleId = 'tmr-reader-style';"
-
         "  var doc = document;"
         "  var head = doc.head || doc.getElementsByTagName('head')[0];"
         "  if (!head) return;"
         "  var style = doc.getElementById(styleId);"
-        "  if (!style) {"
-        "    style = doc.createElement('style');"
-        "    style.id = styleId;"
-        "    head.appendChild(style);"
-        "  }"
+        "  if (!style) { style = doc.createElement('style'); style.id = styleId; head.appendChild(style); }"
         "  var css = '';"
-        // 1) 设置全局 CSS 变量：背景 / 前景色 / 字号
-        "  css += ':root{--md-font-size:' + fontSize + ';"
-        "         --md-bg:' + bg + ';"
-        "         --md-fg:' + fontColor + ';"
-        "         --md-scrollbar-width:' + scrollbarWidth + ';}';"
 
-        // 2) body：用于占位 HTML 的兜底样式
-        "  css += 'body{font-size:' + fontSize + ';"
-        "                 color:' + fontColor + ';"
-        "                 background:' + bg + ';}';"
-        // 3) 嵌入式阅读器结构：#md-root + .md-content
-        "  css += '.md-root{background-color:var(--md-bg);"
-        "                   color:var(--md-fg);}';"
-        "  css += '.md-content{font-size:var(--md-font-size);"
-        "                      color:var(--md-fg);}';"
+        // 1) 全局变量
+        "  css += ':root{--md-font-size:' + fontSize + ';"
+        "                 --md-bg:' + bg + ';"
+        "                 --md-fg:' + fontColor + ';}';"
+
+        // 2) 页面根与常见容器：颜色/字号/背景同时兜底
+        "  css += 'html, body, #md-root, .md-root, #root, #app, .markdown-body, .md-content{"
+        "           font-size:var(--md-font-size);"
+        "           color:var(--md-fg);"
+        "         }';"
+        "  css += 'body, #md-root, .md-root{"
+        "           background: var(--md-bg);"
+        "         }';"
+
+        // 3) 显式控制滚动条（命中 html / body / .md-root 三种容器）
+        "  css += 'html::-webkit-scrollbar{width:' + scrollbarWidth + ';}"
+        "          body::-webkit-scrollbar{width:' + scrollbarWidth + ';}"
+        "          .md-root::-webkit-scrollbar{width:' + scrollbarWidth + ';}';"
+        "  css += 'html, body{overflow-y:' + overflowY + ';}';"
+
         "  style.textContent = css;"
         "})();"
-    ).arg(fontSizeCss, fontColorCss, bgCss, scrollbarWidthCss);
+    ).arg(fontSizeCss, fontColorCss, bgCss, scrollbarWidthCss, overflowCss);
 
     m_view->page()->runJavaScript(js);
 }
