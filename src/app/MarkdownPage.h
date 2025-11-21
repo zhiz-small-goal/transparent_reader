@@ -21,6 +21,9 @@ protected:
     bool acceptNavigationRequest(const QUrl &url,
                                  NavigationType type,
                                  bool isMainFrame) override;
+
+    // 处理 target="_blank" / Ctrl+点击 等触发的新窗口请求
+    QWebEnginePage *createWindow(WebWindowType type) override;
 };
 
 #endif // TRANSPARENTMDREADER_MARKDOWNPAGE_H

@@ -185,19 +185,48 @@ public:
                        | Qt::Tool
                        | Qt::WindowStaysOnTopHint);
         setAttribute(Qt::WA_TranslucentBackground);
-        setFixedHeight(32);
+        setFixedHeight(40);
 
         auto *layout = new QHBoxLayout(this);
         layout->setContentsMargins(8, 0, 8, 0);
         layout->setSpacing(6);
 
         auto *iconLabel = new QLabel(this);
-        iconLabel->setText(u8"📄");
+        iconLabel->setText(QString::fromUtf8("📄"));
         layout->addWidget(iconLabel);
 
         auto *titleLabel = new QLabel(this);
         titleLabel->setText(QStringLiteral("TransparentMdReader"));
         layout->addWidget(titleLabel, 1);
+
+        // 历史记录：上一篇 / 下一篇
+        m_prevDocButton = new QToolButton(this);
+        m_prevDocButton->setText(QStringLiteral("上一篇"));
+        m_prevDocButton->setToolTip(QStringLiteral("历史记录后退到上一文件"));
+        layout->addWidget(m_prevDocButton);
+
+        m_nextDocButton = new QToolButton(this);
+        m_nextDocButton->setText(QStringLiteral("下一篇"));
+        m_nextDocButton->setToolTip(QStringLiteral("历史记录前进到下一文件"));
+        layout->addWidget(m_nextDocButton);
+
+        // 一屏翻页按钮（上一屏 / 下一屏）
+        m_prevPageButton = new QToolButton(this);
+        m_prevPageButton->setText(QStringLiteral("▲"));
+        m_prevPageButton->setToolTip(QStringLiteral("上一屏（向上翻页）"));
+        layout->addWidget(m_prevPageButton);
+
+        m_nextPageButton = new QToolButton(this);
+        m_nextPageButton->setText(QStringLiteral("▼"));
+        m_nextPageButton->setToolTip(QStringLiteral("下一屏（向下翻页）"));
+        layout->addWidget(m_nextPageButton);
+
+        // 锁定状态按钮：🔒 / 🔓
+        m_lockButton = new QToolButton(this);
+        m_lockButton->setText(QStringLiteral("🔒"));
+        m_lockButton->setToolTip(
+            QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁，或点击此按钮解除锁定。"));
+        layout->addWidget(m_lockButton);
 
         // Settings 按钮
         m_settingsButton = new QToolButton(this);
@@ -210,6 +239,27 @@ public:
         m_closeButton->setToolTip(QStringLiteral("关闭阅读器"));
         layout->addWidget(m_closeButton);
 
+            // 统一放大几个按钮
+        auto enlargeButton = [](QToolButton *btn) {
+            if (!btn) return;
+            // 最小宽高稍微大一点
+            btn->setMinimumSize(36, 28);
+            // 字体放大一点
+            QFont f = btn->font();
+            f.setPointSize(f.pointSize() + 2);
+            btn->setFont(f);
+        };
+
+        enlargeButton(m_prevDocButton);
+        enlargeButton(m_nextDocButton);
+        enlargeButton(m_prevPageButton);
+        enlargeButton(m_nextPageButton);
+        enlargeButton(m_lockButton);
+        enlargeButton(m_settingsButton);
+        enlargeButton(m_closeButton);
+
+
+        // 关闭阅读器
         connect(m_closeButton, &QToolButton::clicked, this, [this]() {
             if (m_mainWindow) {
                 m_mainWindow->close();
@@ -217,34 +267,80 @@ public:
             close();
         });
 
+        // Settings 占位
         connect(m_settingsButton, &QToolButton::clicked, this, [this]() {
-            QMessageBox::information(this,
-                                     QStringLiteral("Settings"),
-                                     QStringLiteral("这里将来可以打开设置窗口（当前为占位逻辑）。"));
+            QMessageBox::information(
+                this,
+                QStringLiteral("Settings"),
+                QStringLiteral("这里将来可以打开设置窗口（当前为占位逻辑）。"));
+        });
+
+        // 翻页按钮：始终可用（不受锁定影响）
+        connect(m_prevPageButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->scrollPageUp();
+            }
+        });
+        connect(m_nextPageButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->scrollPageDown();
+            }
+        });
+
+        // 历史记录：上一篇 / 下一篇（挂在已有的 goBack/goForward 上）
+        connect(m_prevDocButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->goBack();
+            }
+        });
+        connect(m_nextDocButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->goForward();
+            }
+        });
+
+        // 🔒 按钮：切换用户锁定偏好
+        connect(m_lockButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->toggleLockByUser();
+            }
         });
     }
 
-    // 根据锁定状态调整提示文本（不再显示 🔒 / 🔓）
+    // 根据当前锁定状态更新按钮外观与提示
     void syncFromWindowLockState(bool locked)
     {
-        if (!m_settingsButton) return;
-        if (locked) {
-            m_settingsButton->setToolTip(
-                QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁。"));
-        } else {
-            m_settingsButton->setToolTip(
-                QStringLiteral("当前已解锁。松开 Ctrl 恢复锁定（穿透）。"));
+        if (m_lockButton) {
+            m_lockButton->setText(locked ? QStringLiteral("🔒")
+                                         : QStringLiteral("🔓"));
+            if (locked) {
+                m_lockButton->setToolTip(
+                    QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁，或点击此按钮解除锁定。"));
+            } else {
+                m_lockButton->setToolTip(
+                    QStringLiteral("当前已解锁。松开 Ctrl 或再次点击此按钮可恢复锁定（鼠标穿透）。"));
+            }
+        }
+
+        if (m_settingsButton) {
+            if (locked) {
+                m_settingsButton->setToolTip(
+                    QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁。"));
+            } else {
+                m_settingsButton->setToolTip(
+                    QStringLiteral("当前已解锁，内容可交互。"));
+            }
         }
     }
 
-    // 同步自己的位置到 MainWindow 顶部
+    // 把标题栏贴到主窗口底部
     void syncWithMainWindow()
     {
         if (!m_mainWindow) return;
         const QRect frame = m_mainWindow->frameGeometry();
         setFixedWidth(frame.width());
-        // 叠在主窗口上边缘（你可以改成 frame.top() + 2 之类微调）
-        move(frame.left(), frame.top() - height());
+        // 紧贴主窗口下边缘（在阅读窗口下面一条）
+        move(frame.left(), frame.bottom());
     }
 
 protected:
@@ -263,7 +359,7 @@ protected:
 
     void mouseMoveEvent(QMouseEvent *event) override
     {
-        if (m_dragging && m_mainWindow && !m_mainWindow->isLocked()) {
+        if (m_dragging && m_mainWindow) {
             const QPoint delta = event->globalPosition().toPoint() - m_dragPos;
             m_mainWindow->move(m_windowPos + delta);
             event->accept();
@@ -274,7 +370,7 @@ protected:
 
     void mouseReleaseEvent(QMouseEvent *event) override
     {
-        if (event->button() == Qt::LeftButton && m_dragging) {
+        if (m_dragging && event->button() == Qt::LeftButton) {
             m_dragging = false;
             event->accept();
             return;
@@ -283,12 +379,17 @@ protected:
     }
 
 private:
-    MainWindow  *m_mainWindow     = nullptr;
-    bool         m_dragging       = false;
+    MainWindow  *m_mainWindow      = nullptr;
+    bool         m_dragging        = false;
     QPoint       m_dragPos;
     QPoint       m_windowPos;
-    QToolButton *m_settingsButton = nullptr;
-    QToolButton *m_closeButton    = nullptr;
+    QToolButton *m_prevPageButton  = nullptr;
+    QToolButton *m_nextPageButton  = nullptr;
+    QToolButton *m_prevDocButton   = nullptr;
+    QToolButton *m_nextDocButton   = nullptr;
+    QToolButton *m_lockButton      = nullptr;
+    QToolButton *m_settingsButton  = nullptr;
+    QToolButton *m_closeButton     = nullptr;
 };
 
 
@@ -503,26 +604,35 @@ MainWindow::MainWindow(QWidget *parent)
 //     }
 // #endif
 
-    // NEW: 启动时默认处于锁定 / 内容穿透模式
+        // NEW: 启动时默认处于锁定 / 内容穿透模式
+    m_manualLocked = true;   // 用户默认偏好：平时保持锁定
     setLocked(true);
 
-    #ifdef Q_OS_WIN
+#ifdef Q_OS_WIN
     // 每 30ms 轮询一次 Ctrl 键状态：
-    //  - Ctrl 未按下：保持锁定（穿透）
-    //  - Ctrl 按下：临时解锁（可交互）
+    //  - Ctrl 未按下：跟随用户的锁定偏好 m_manualLocked
+    //  - Ctrl 按下：一律临时解锁（可交互）
     auto *ctrlTimer = new QTimer(this);
     ctrlTimer->setInterval(30);
     connect(ctrlTimer, &QTimer::timeout, this, [this]() {
         SHORT state = GetAsyncKeyState(VK_CONTROL);
         bool ctrlDown = (state & 0x8000) != 0;
-        bool shouldLocked = !ctrlDown;   // 没按 Ctrl -> 锁定；按住 Ctrl -> 解锁
 
-        if (shouldLocked != m_locked) {
-            setLocked(shouldLocked);
+        // 默认使用用户的锁定偏好
+        bool effectiveLocked = m_manualLocked;
+
+        // 按住 Ctrl 时临时解锁
+        if (ctrlDown) {
+            effectiveLocked = false;
+        }
+
+        if (effectiveLocked != m_locked) {
+            setLocked(effectiveLocked);
         }
     });
     ctrlTimer->start();
 #endif
+
 
     // 这里原来如果有 Ctrl+O 快捷键等，保持不动
     auto *openShortcut = new QShortcut(QKeySequence::Open, this);
@@ -539,6 +649,28 @@ MainWindow::~MainWindow()
     if (hwnd) {
         UnregisterHotKey(hwnd, 1);
     }
+#endif
+}
+
+void MainWindow::toggleLockByUser()
+{
+    // 用户点击标题栏上的 🔒 按钮时调用：
+    // 切换“基础锁定偏好”，Ctrl 仍然可以临时解锁
+    m_manualLocked = !m_manualLocked;
+
+#ifdef Q_OS_WIN
+    // 立即按当前 Ctrl 状态 + 用户偏好应用一次，避免感觉迟钝
+    SHORT state = GetAsyncKeyState(VK_CONTROL);
+    bool ctrlDown = (state & 0x8000) != 0;
+
+    bool effectiveLocked = m_manualLocked;
+    if (ctrlDown) {
+        // 按住 Ctrl 时一律视为解锁
+        effectiveLocked = false;
+    }
+    setLocked(effectiveLocked);
+#else
+    setLocked(m_manualLocked);
 #endif
 }
 

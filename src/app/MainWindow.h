@@ -35,6 +35,18 @@ public:
     bool isLocked() const noexcept { return m_locked; }
     void setLocked(bool locked);
 
+    // 用户通过标题栏点击 🔒 时切换锁定偏好
+    void toggleLockByUser();
+
+    // 由标题栏翻页按钮调用：滚动一屏（向上/向下）
+    void scrollPageUp();    // PageUp
+    void scrollPageDown();  // PageDown
+
+ public slots:
+    void goBack();
+    void goForward();   
+
+
 protected:
 // 拦截 WebEngine 区域的鼠标事件（右键翻页 / 整窗拖动）
 bool eventFilter(QObject *obj, QEvent *event) override; // NEW
@@ -56,8 +68,6 @@ private slots:
     void openMarkdownFileFromDialog();
     void handleOpenMarkdownUrl(const QUrl &url);
     void handleOpenImageUrl(const QUrl &url);
-    void goBack();
-    void goForward();
     void showContextMenu(const QPoint &pos);
 
 private:
@@ -87,15 +97,19 @@ private:
     QString m_pendingTitle;
     QString m_pendingBaseUrl;
 
-    // ===== 整窗拖动状态（未锁定时用） =====  // NEW
+        // ===== 整窗拖动状态（未锁定时用） =====  // NEW
     bool   m_dragging      = false;
     QPoint m_dragStartPos;
 
-    // 滚动一屏（向上/向下）
-    void scrollPageUp();    // NEW
-    void scrollPageDown();  // NEW
+    // 当前是否“实际处于锁定（穿透）”状态
+    bool m_locked = false;
 
-    bool    m_locked = false; // 当前是否处于“锁定（穿透）”状态
+    // 用户的基础锁定偏好：
+    //   true  = 平时保持锁定（默认值）
+    //   false = 平时保持解锁
+    // Ctrl 始终可以临时解锁，但不会修改这个值
+    bool m_manualLocked = true;
+
 
 };
 

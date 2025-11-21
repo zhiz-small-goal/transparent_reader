@@ -48,3 +48,14 @@ bool MarkdownPage::acceptNavigationRequest(const QUrl &url,
 
     return QWebEnginePage::acceptNavigationRequest(url, type, isMainFrame);
 }
+
+QWebEnginePage *MarkdownPage::createWindow(QWebEnginePage::WebWindowType type)
+{
+    Q_UNUSED(type);
+    // 所有 “新窗口” 请求（target="_blank"、Ctrl+点击 等）都在当前页面中处理，
+    // 这样会继续走 acceptNavigationRequest() 逻辑，由我们统一分发：
+    //  - 内部 .md 链接 -> emit openMarkdown(url)
+    //  - 图片链接      -> emit openImage(url)
+    //  - 其它链接      -> QDesktopServices::openUrl(url)
+    return this;
+}
