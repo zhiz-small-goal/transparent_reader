@@ -481,13 +481,14 @@ public:
         layout->setContentsMargins(8, 0, 8, 0);
         layout->setSpacing(6);
 
-        auto *iconLabel = new QLabel(this);
-        iconLabel->setText(QString::fromUtf8("📄"));
-        layout->addWidget(iconLabel);
+        // 左下角：拖动按钮（按住左键可拖动主窗口）
+        m_dragButton = new QToolButton(this);
+        m_dragButton->setText(QStringLiteral("📄 TransparentMdReader"));
+        m_dragButton->setToolTip(QStringLiteral("按住左键拖动窗口位置"));
+        m_dragButton->setAutoRaise(true);
+        m_dragButton->setCursor(Qt::SizeAllCursor);
+        layout->addWidget(m_dragButton, 1);
 
-        auto *titleLabel = new QLabel(this);
-        titleLabel->setText(QStringLiteral("TransparentMdReader"));
-        layout->addWidget(titleLabel, 1);
 
         // 历史记录：上一篇 / 下一篇
         m_prevDocButton = new QToolButton(this);
@@ -540,6 +541,7 @@ public:
             btn->setFont(f);
         };
 
+        enlargeButton(m_dragButton);
         enlargeButton(m_prevDocButton);
         enlargeButton(m_nextDocButton);
         enlargeButton(m_prevPageButton);
@@ -557,11 +559,28 @@ public:
             close();
         });
 
-                // Settings：打开阅读设置对话框（实时预览）
+        // Settings：打开阅读设置对话框（实时预览）
         connect(m_settingsButton, &QToolButton::clicked, this, [this]() {
             if (m_mainWindow) {
                 m_mainWindow->openSettingsDialog();
             }
+        });
+
+        // 左下角拖动按钮：按住左键可以拖动窗口
+        connect(m_dragButton, &QToolButton::pressed, this, [this]() {
+            if (!m_mainWindow) return;
+#ifdef Q_OS_WIN
+            HWND hwnd = reinterpret_cast<HWND>(m_mainWindow->winId());
+            if (hwnd) {
+                ReleaseCapture();
+                SendMessageW(hwnd,
+                             WM_SYSCOMMAND,
+                             SC_MOVE | HTCAPTION,
+                             0);
+            }
+#else
+            // 非 Windows 平台：这里暂时不做特殊处理
+#endif
         });
 
 
@@ -668,46 +687,9 @@ public:
     }
 
 
-protected:
-    // 只在解锁状态时支持拖动整个阅读器窗口
-    void mousePressEvent(QMouseEvent *event) override
-    {
-        if (event->button() == Qt::LeftButton && m_mainWindow && !m_mainWindow->isLocked()) {
-            m_dragging  = true;
-            m_dragPos   = event->globalPosition().toPoint();
-            m_windowPos = m_mainWindow->frameGeometry().topLeft();
-            event->accept();
-            return;
-        }
-        QWidget::mousePressEvent(event);
-    }
-
-    void mouseMoveEvent(QMouseEvent *event) override
-    {
-        if (m_dragging && m_mainWindow) {
-            const QPoint delta = event->globalPosition().toPoint() - m_dragPos;
-            m_mainWindow->move(m_windowPos + delta);
-            event->accept();
-            return;
-        }
-        QWidget::mouseMoveEvent(event);
-    }
-
-    void mouseReleaseEvent(QMouseEvent *event) override
-    {
-        if (m_dragging && event->button() == Qt::LeftButton) {
-            m_dragging = false;
-            event->accept();
-            return;
-        }
-        QWidget::mouseReleaseEvent(event);
-    }
-
 private:
     MainWindow  *m_mainWindow      = nullptr;
-    bool         m_dragging        = false;
-    QPoint       m_dragPos;
-    QPoint       m_windowPos;
+    QToolButton *m_dragButton      = nullptr;
     QToolButton *m_prevPageButton  = nullptr;
     QToolButton *m_nextPageButton  = nullptr;
     QToolButton *m_prevDocButton   = nullptr;
@@ -716,6 +698,7 @@ private:
     QToolButton *m_settingsButton  = nullptr;
     QToolButton *m_closeButton     = nullptr;
 };
+
 
 
 class ImageOverlay : public QWidget      // NEW
