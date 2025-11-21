@@ -2,6 +2,7 @@
 #include "MarkdownPage.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QDragEnterEvent>
@@ -39,7 +40,15 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <QCheckBox>
-
+#include <QSystemTrayIcon>
+#include <QStyle>
+#include <QSignalBlocker>
+#include <QDateTime>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QStringConverter>
+#include <QIcon>
+#include <cstdio>
 
 
 #ifdef Q_OS_WIN                    // Windows 原生消息处理
@@ -206,6 +215,134 @@ QString colorToCssRgba(const QColor &c, qreal alphaOverride = -1.0)
 }
 
 
+#ifdef Q_OS_WIN
+QString autoStartRegKey()
+{
+    return QStringLiteral("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run");
+}
+
+QString autoStartValueName()
+{
+    return QStringLiteral("TransparentMdReader");
+}
+
+bool queryAutoStartEnabled()
+{
+    QSettings reg(autoStartRegKey(), QSettings::NativeFormat);
+    const QString exePath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    const QString current = reg.value(autoStartValueName()).toString();
+    return current.compare(exePath, Qt::CaseInsensitive) == 0;
+}
+
+bool applyAutoStartEnabled(bool enabled, QString &error)
+{
+    QSettings reg(autoStartRegKey(), QSettings::NativeFormat);
+    const QString exePath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    if (enabled) {
+        reg.setValue(autoStartValueName(), exePath);
+    } else {
+        reg.remove(autoStartValueName());
+    }
+    reg.sync();
+    if (reg.status() != QSettings::NoError) {
+        error = QObject::tr("写入注册表失败，请检查权限。");
+        return false;
+    }
+    return true;
+}
+#else
+bool queryAutoStartEnabled()
+{
+    return false;
+}
+
+bool applyAutoStartEnabled(bool /*enabled*/, QString &error)
+{
+    error = QObject::tr("当前平台暂未实现开机自启开关。");
+    return false;
+}
+#endif
+
+QFile g_logFile;
+QtMessageHandler g_prevHandler = nullptr;
+bool g_logEnabled = false;
+QMutex g_logMutex;
+
+QString logFilePath()
+{
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (dir.isEmpty()) {
+        dir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    }
+    if (dir.isEmpty()) {
+        dir = QDir::tempPath();
+    }
+
+    QDir d(dir);
+    d.mkpath(QStringLiteral("."));
+    return d.filePath(QStringLiteral("transparent_reader.log"));
+}
+
+void fileLogHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    if (g_logEnabled && g_logFile.isOpen()) {
+        QMutexLocker locker(&g_logMutex);
+        QTextStream out(&g_logFile);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        out.setEncoding(QStringConverter::Utf8);
+#endif
+        out << QDateTime::currentDateTime().toString(Qt::ISODateWithMs) << " ";
+        switch (type) {
+        case QtDebugMsg:    out << "[DEBUG] "; break;
+        case QtInfoMsg:     out << "[INFO ] "; break;
+        case QtWarningMsg:  out << "[WARN ] "; break;
+        case QtCriticalMsg: out << "[ERROR] "; break;
+        case QtFatalMsg:    out << "[FATAL] "; break;
+        }
+        out << msg << "\n";
+        out.flush();
+        g_logFile.flush();
+    }
+
+    if (g_prevHandler) {
+        g_prevHandler(type, context, msg);
+    } else {
+        const QByteArray bytes = msg.toLocal8Bit();
+        std::fwrite(bytes.constData(), 1, static_cast<size_t>(bytes.size()), stderr);
+        std::fputc('\n', stderr);
+        std::fflush(stderr);
+    }
+}
+
+bool setFileLoggingEnabled(bool enabled)
+{
+    if (enabled) {
+        if (!g_logFile.isOpen()) {
+            g_logFile.setFileName(logFilePath());
+            if (!g_logFile.open(QIODevice::Append | QIODevice::Text)) {
+                return false;
+            }
+        }
+        if (!g_prevHandler) {
+            g_prevHandler = qInstallMessageHandler(fileLogHandler);
+        } else {
+            qInstallMessageHandler(fileLogHandler);
+        }
+        g_logEnabled = true;
+        return true;
+    }
+
+    g_logEnabled = false;
+    if (g_prevHandler) {
+        qInstallMessageHandler(g_prevHandler);
+    } else {
+        qInstallMessageHandler(nullptr);
+    }
+    if (g_logFile.isOpen()) {
+        g_logFile.flush();
+    }
+    return true;
+}
 // ================= 图片查看浮层（半透明背景 + 右上角关闭） =================
 
 
@@ -913,6 +1050,12 @@ MainWindow::MainWindow(QWidget *parent)
     if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.2;
     if (g_readerStyle.backgroundOpacity > 1.0) g_readerStyle.backgroundOpacity = 1.0;
 
+    m_autoStartEnabled = queryAutoStartEnabled();
+    m_loggingEnabled = settings.value("logging/enabled", false).toBool();
+    if (m_loggingEnabled && !setFileLoggingEnabled(true)) {
+        m_loggingEnabled = false;
+    }
+
 
     const QUrl pageUrl = locateIndexPage();
     if (pageUrl.isValid()) {
@@ -943,6 +1086,7 @@ MainWindow::MainWindow(QWidget *parent)
         m_view->setHtml(html);
         applyReaderStyle();
     }
+    createSystemTray();
 
     // NEW: Windows 下注册全局热键 Ctrl+Alt+L，用来锁定/解锁
 // #ifdef Q_OS_WIN
@@ -995,6 +1139,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    if (m_loggingEnabled) {
+        setFileLoggingEnabled(false);
+    }
 #ifdef Q_OS_WIN
     // 释放 Ctrl+Alt+L 这个热键（ID = 1）
     HWND hwnd = reinterpret_cast<HWND>(winId());
@@ -1241,6 +1388,116 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
 
     QMainWindow::dropEvent(event);
+}
+
+void MainWindow::createSystemTray()
+{
+    if (m_trayIcon) {
+        return;
+    }
+
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
+        return;
+    }
+
+    m_trayIcon = new QSystemTrayIcon(this);
+    QIcon trayIcon = windowIcon();
+    if (trayIcon.isNull()) {
+        trayIcon = style()->standardIcon(QStyle::SP_FileIcon);
+    }
+    m_trayIcon->setIcon(trayIcon);
+    m_trayIcon->setToolTip(QStringLiteral("TransparentMdReader"));
+
+    m_trayMenu = new QMenu(this);
+    m_trayOpenAction = m_trayMenu->addAction(QStringLiteral("打开 Markdown 文件..."));
+    connect(m_trayOpenAction, &QAction::triggered,
+            this, &MainWindow::openMarkdownFileFromDialog);
+
+    m_trayAutoStartAction = m_trayMenu->addAction(QStringLiteral("开机自启"));
+    m_trayAutoStartAction->setCheckable(true);
+    connect(m_trayAutoStartAction, &QAction::toggled,
+            this, &MainWindow::toggleAutoStart);
+
+    m_trayLoggingAction = m_trayMenu->addAction(QStringLiteral("日志记录"));
+    m_trayLoggingAction->setCheckable(true);
+    connect(m_trayLoggingAction, &QAction::toggled,
+            this, &MainWindow::toggleLogging);
+
+    m_trayMenu->addSeparator();
+    m_trayQuitAction = m_trayMenu->addAction(QStringLiteral("退出"));
+    connect(m_trayQuitAction, &QAction::triggered,
+            this, &MainWindow::quitFromTray);
+
+    m_trayIcon->setContextMenu(m_trayMenu);
+    connect(m_trayIcon, &QSystemTrayIcon::activated,
+            this, &MainWindow::handleTrayActivated);
+
+    updateTrayChecks();
+    m_trayIcon->show();
+}
+
+void MainWindow::updateTrayChecks()
+{
+    if (m_trayAutoStartAction) {
+        const QSignalBlocker blocker(m_trayAutoStartAction);
+        m_trayAutoStartAction->setChecked(m_autoStartEnabled);
+    }
+    if (m_trayLoggingAction) {
+        const QSignalBlocker blocker(m_trayLoggingAction);
+        m_trayLoggingAction->setChecked(m_loggingEnabled);
+    }
+}
+
+void MainWindow::handleTrayActivated(QSystemTrayIcon::ActivationReason reason)
+{
+    if (!m_trayIcon) {
+        return;
+    }
+
+    if (reason == QSystemTrayIcon::Trigger
+        || reason == QSystemTrayIcon::DoubleClick) {
+        if (isHidden()) {
+            show();
+        }
+        raise();
+        activateWindow();
+    }
+}
+
+void MainWindow::toggleAutoStart(bool enabled)
+{
+    QString error;
+    if (!applyAutoStartEnabled(enabled, error)) {
+        QMessageBox::warning(this,
+                             QStringLiteral("开机自启"),
+                             error);
+        m_autoStartEnabled = queryAutoStartEnabled();
+    } else {
+        m_autoStartEnabled = enabled;
+        QSettings settings("zhiz", "TransparentMdReader");
+        settings.setValue("app/autoStart", m_autoStartEnabled);
+    }
+    updateTrayChecks();
+}
+
+void MainWindow::toggleLogging(bool enabled)
+{
+    if (!setFileLoggingEnabled(enabled)) {
+        QMessageBox::warning(this,
+                             QStringLiteral("日志记录"),
+                             QStringLiteral("无法写入日志文件，请检查路径权限。"));
+        m_loggingEnabled = false;
+    } else {
+        m_loggingEnabled = enabled;
+        QSettings settings("zhiz", "TransparentMdReader");
+        settings.setValue("logging/enabled", m_loggingEnabled);
+    }
+    updateTrayChecks();
+}
+
+void MainWindow::quitFromTray()
+{
+    QApplication::quit();
 }
 
 bool MainWindow::canGoBack() const

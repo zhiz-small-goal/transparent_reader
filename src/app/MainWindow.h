@@ -9,12 +9,14 @@
 #include <QByteArray>          // NEW: nativeEvent 所需
 #include <QtCore/qglobal.h>
 #include <QEvent>
+#include <QSystemTrayIcon>
 
 QT_BEGIN_NAMESPACE
 class QAction;
 class QDragEnterEvent;
 class QDropEvent;
 class QWebEngineView;
+class QMenu;
 QT_END_NAMESPACE
 
 class ImageOverlay;
@@ -73,6 +75,10 @@ private slots:
     void handleOpenMarkdownUrl(const QUrl &url);
     void handleOpenImageUrl(const QUrl &url);
     void showContextMenu(const QPoint &pos);
+    void handleTrayActivated(QSystemTrayIcon::ActivationReason reason);
+    void toggleAutoStart(bool enabled);
+    void toggleLogging(bool enabled);
+    void quitFromTray();
 
 private:
     void renderMarkdownInPage(const QString &markdown,
@@ -82,11 +88,19 @@ private:
     bool canGoForward() const;
     void updateNavigationActions();
     void updateClickThroughState();
+    void createSystemTray();
+    void updateTrayChecks();
 
 private:
     QWebEngineView *m_view         = nullptr;
     ImageOverlay   *m_imageOverlay = nullptr;
     TitleBar       *m_titleBar     = nullptr;
+    QSystemTrayIcon *m_trayIcon    = nullptr;
+    QMenu           *m_trayMenu    = nullptr;
+    QAction         *m_trayOpenAction      = nullptr;
+    QAction         *m_trayAutoStartAction = nullptr;
+    QAction         *m_trayLoggingAction   = nullptr;
+    QAction         *m_trayQuitAction      = nullptr;
 
     QString     m_lastOpenDir;
     QString     m_currentFilePath;
@@ -116,7 +130,8 @@ private:
     //   false = 平时保持解锁
     // Ctrl 始终可以临时解锁，但不会修改这个值
     bool m_manualLocked = true;
-
+    bool m_loggingEnabled   = false;
+    bool m_autoStartEnabled = false;
 
 };
 

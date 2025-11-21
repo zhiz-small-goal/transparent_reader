@@ -266,6 +266,27 @@
 
 ---
 
+## 阶段 6：2025-11-21 新增托盘菜单与自启/日志开关
 
+日期：2025-11-21
+状态：已完成
 
+目标：
+- 托盘集中提供打开文件、自启切换、日志记录和退出入口
+- 自启状态按系统实际注册表同步，日志开关可即时生效
+- 托盘左/双击可快速唤起主窗口
 
+涉及文件：
+- F:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
+- F:/zhiz-c++/transparent_reader/src/app/MainWindow.h
+
+改动概览：
+
+- MainWindow.cpp：新增自启/日志辅助函数（注册表读写、文件日志 handler），初始化时创建托盘；实现托盘菜单与点击行为；处理自启/日志勾选的状态同步与错误提示，退出时清理日志 handler。
+- MainWindow.h：加入托盘成员与槽声明，记录自启、日志开关状态。
+
+关键点说明：
+
+- 自启仅在 Windows 使用 HKCU\\...\\Run 写入当前可执行路径，失败时回退勾选并提示。
+- 日志记录通过全局 message handler 追加到 AppData 路径下 transparent_reader.log，关闭时恢复原消息处理器避免泄漏。
+- 托盘仅在系统支持托盘时创建，左/双击托盘会显示并激活主窗口。
