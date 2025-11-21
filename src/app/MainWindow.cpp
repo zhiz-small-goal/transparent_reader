@@ -1016,7 +1016,7 @@ void MainWindow::openMarkdownFileFromDialog()   // NEW
 }
 
 // 文件：src/app/MainWindow.cpp
-// 作用：在 Web 页面中向上/向下滚动一屏高度（约 80%）
+// 作用：在 Web 页面中向上/向下滚动一屏高度（约 50%）
 
 void MainWindow::scrollPageUp()    // NEW
 {
@@ -1025,7 +1025,7 @@ void MainWindow::scrollPageUp()    // NEW
     }
     // 使用 JavaScript 让页面内容向上滚一屏
     const QString js = QStringLiteral(
-        "window.scrollBy(0, -window.innerHeight * 0.8);"
+        "window.scrollBy(0, -window.innerHeight * 0.5);" 
     );
     m_view->page()->runJavaScript(js);
 }
@@ -1037,7 +1037,7 @@ void MainWindow::scrollPageDown()  // NEW
     }
     // 使用 JavaScript 让页面内容向下滚一屏
     const QString js = QStringLiteral(
-        "window.scrollBy(0, window.innerHeight * 0.8);"
+        "window.scrollBy(0, window.innerHeight * 0.5);"
     );
     m_view->page()->runJavaScript(js);
 }
