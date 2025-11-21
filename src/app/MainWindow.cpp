@@ -30,6 +30,16 @@
 #include <QWidget>
 #include <QDesktopServices>
 #include <QEvent>
+#include <QColor>
+#include <QColorDialog>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QPushButton>
+#include <QSlider>
+#include <QSpinBox>
+
+
 
 #ifdef Q_OS_WIN                    // Windows 原生消息处理
 #  define WIN32_LEAN_AND_MEAN
@@ -130,7 +140,7 @@ QString basicMarkdownToHtml(const QString &markdown, const QString &title)
         "      white-space: pre-wrap;\n"
         "    }\n"
         "    a {\n"
-        "      color: rgba(80, 160, 255, 0.95);\n"
+        "      color: rgba(87, 149, 224, 0.95);\n"
         "      text-decoration: underline;\n"
         "      cursor: pointer;\n"
         "      transition: opacity 0.12s ease;\n"
@@ -164,11 +174,235 @@ QString toJsStringLiteral(const QString &str)
     return "'" + s + "'";
 }
 
+// ================= 阅读样式 =================
+
+// 阅读样式：字体大小 / 字体颜色 / 背景颜色 / 背景透明度
+struct ReaderStyle {
+    int   fontPointSize      = 16;                         // 字号（pt）
+    QColor fontColor         = QColor(QStringLiteral("#f5f5f5"));  // 接近你占位页的默认颜色
+    QColor backgroundColor   = QColor(45, 44, 44);         // 深灰色背景
+    qreal  backgroundOpacity = 0.55;                       // 0.0 ~ 1.0
+};
+
+// 当前全局阅读样式（单窗口应用，用一个全局即可）
+ReaderStyle g_readerStyle;
+
+// 把 QColor 转成 CSS rgba(...) 字符串
+QString colorToCssRgba(const QColor &c, qreal alphaOverride = -1.0)
+{
+    QColor tmp = c;
+    qreal a = (alphaOverride >= 0.0) ? alphaOverride : tmp.alphaF();
+    if (a < 0.0) a = 0.0;
+    if (a > 1.0) a = 1.0;
+
+    return QStringLiteral("rgba(%1,%2,%3,%4)")
+        .arg(tmp.red())
+        .arg(tmp.green())
+        .arg(tmp.blue())
+        .arg(a, 0, 'f', 3);
+}
+
 
 // ================= 图片查看浮层（半透明背景 + 右上角关闭） =================
 
 
 } // namespace
+
+// 简单的“阅读设置”对话框：所有控件改动时实时发出 styleChanged 信号
+class ReaderSettingsDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit ReaderSettingsDialog(const ReaderStyle &initialStyle,
+                                  QWidget *parent = nullptr)
+        : QDialog(parent)
+        , m_style(initialStyle)
+    {
+        setWindowTitle(QStringLiteral("阅读设置"));
+        // 小工具窗 + 置顶，方便一边调一边看效果
+        setWindowFlags(windowFlags()
+                       | Qt::Tool
+                       | Qt::WindowStaysOnTopHint);
+        setModal(false);
+
+        // ===== 字体大小 =====
+        m_fontSizeSpin = new QSpinBox(this);
+        m_fontSizeSpin->setRange(8, 40);
+        m_fontSizeSpin->setValue(m_style.fontPointSize);
+        connect(m_fontSizeSpin,
+                QOverload<int>::of(&QSpinBox::valueChanged),
+                this,
+                [this](int v) {
+                    m_style.fontPointSize = v;
+                    emit styleChanged(m_style);   // 字号改动 -> 立刻通知外面
+                });
+
+        // ===== 背景透明度：20% ~ 100% =====
+        m_opacitySlider = new QSlider(Qt::Horizontal, this);
+        m_opacitySlider->setRange(0, 100);
+        m_opacitySlider->setValue(
+            static_cast<int>(m_style.backgroundOpacity * 100.0));
+
+        auto *opacityLabel = new QLabel(this);
+        opacityLabel->setMinimumWidth(40);
+
+        auto updateOpacityLabel = [this, opacityLabel]() {
+            const int v = m_opacitySlider->value();
+            opacityLabel->setText(
+                QString::number(v) + QStringLiteral("%"));
+        };
+        updateOpacityLabel();
+
+        connect(m_opacitySlider, &QSlider::valueChanged,
+                this, [this, opacityLabel](int v) {
+                    if (v < 0) v = 0;
+                    if (v > 100) v = 100;
+                    m_opacitySlider->blockSignals(true);
+                    m_opacitySlider->setValue(v);
+                    m_opacitySlider->blockSignals(false);
+
+                    m_style.backgroundOpacity = v / 100.0;
+                    opacityLabel->setText(
+                        QString::number(v) + QStringLiteral("%"));
+                    emit styleChanged(m_style);   // 透明度实时生效
+                });
+
+        // ===== 字体颜色按钮 =====
+        m_fontColorButton = new QPushButton(this);
+        updateColorButton(m_fontColorButton, m_style.fontColor);
+        connect(m_fontColorButton, &QPushButton::clicked,
+                this, [this]() {
+                    // 记录原始颜色，取消时可以恢复
+                    const QColor original = m_style.fontColor;
+
+                    auto *dlg = new QColorDialog(m_style.fontColor, this);
+                    dlg->setOption(QColorDialog::ShowAlphaChannel, false);
+                    dlg->setAttribute(Qt::WA_DeleteOnClose);
+
+                    // 拖动过程中：实时预览 + 通知外面应用
+                    connect(dlg, &QColorDialog::currentColorChanged,
+                            this, [this](const QColor &c) {
+                                if (!c.isValid()) return;
+                                m_style.fontColor = c;
+                                updateColorButton(m_fontColorButton,
+                                                  m_style.fontColor);
+                                emit styleChanged(m_style);
+                            });
+
+                    // 点 Cancel：恢复原色并通知外面恢复
+                    connect(dlg, &QColorDialog::rejected,
+                            this, [this, original]() {
+                                m_style.fontColor = original;
+                                updateColorButton(m_fontColorButton,
+                                                  m_style.fontColor);
+                                emit styleChanged(m_style);
+                            });
+
+                    // 点 OK：保持当前颜色（currentColorChanged
+                    // 已经发过最终一次 styleChanged 了）
+                    connect(dlg, &QColorDialog::accepted,
+                            this, [this, dlg]() {
+                                const QColor c = dlg->selectedColor();
+                                if (!c.isValid()) return;
+                                m_style.fontColor = c;
+                                updateColorButton(m_fontColorButton,
+                                                  m_style.fontColor);
+                                emit styleChanged(m_style);
+                            });
+
+                    dlg->open();
+                });
+
+        // ===== 背景颜色按钮 =====
+        m_backgroundColorButton = new QPushButton(this);
+        updateColorButton(m_backgroundColorButton, m_style.backgroundColor);
+        connect(m_backgroundColorButton, &QPushButton::clicked,
+                this, [this]() {
+                    const QColor original = m_style.backgroundColor;
+
+                    auto *dlg = new QColorDialog(m_style.backgroundColor, this);
+                    dlg->setOption(QColorDialog::ShowAlphaChannel, false);
+                    dlg->setAttribute(Qt::WA_DeleteOnClose);
+
+                    connect(dlg, &QColorDialog::currentColorChanged,
+                            this, [this](const QColor &c) {
+                                if (!c.isValid()) return;
+                                m_style.backgroundColor = c;
+                                updateColorButton(m_backgroundColorButton,
+                                                  m_style.backgroundColor);
+                                emit styleChanged(m_style);
+                            });
+
+                    connect(dlg, &QColorDialog::rejected,
+                            this, [this, original]() {
+                                m_style.backgroundColor = original;
+                                updateColorButton(m_backgroundColorButton,
+                                                  m_style.backgroundColor);
+                                emit styleChanged(m_style);
+                            });
+
+                    connect(dlg, &QColorDialog::accepted,
+                            this, [this, dlg]() {
+                                const QColor c = dlg->selectedColor();
+                                if (!c.isValid()) return;
+                                m_style.backgroundColor = c;
+                                updateColorButton(m_backgroundColorButton,
+                                                  m_style.backgroundColor);
+                                emit styleChanged(m_style);
+                            });
+
+                    dlg->open();
+                });
+
+        // ===== 表单布局 =====
+        auto *form = new QFormLayout;
+        form->addRow(QStringLiteral("字体大小"), m_fontSizeSpin);
+        form->addRow(QStringLiteral("字体颜色"), m_fontColorButton);
+        form->addRow(QStringLiteral("背景颜色"), m_backgroundColorButton);
+
+        auto *opacityRow = new QHBoxLayout;
+        opacityRow->setContentsMargins(0, 0, 0, 0);
+        opacityRow->addWidget(m_opacitySlider, 1);
+        opacityRow->addWidget(opacityLabel);
+        form->addRow(QStringLiteral("背景透明度"), opacityRow);
+
+        // 底部一个“关闭”按钮
+        auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
+        connect(buttons, &QDialogButtonBox::rejected,
+                this, &QDialog::reject);
+        connect(buttons, &QDialogButtonBox::accepted,
+                this, &QDialog::accept);
+
+        auto *mainLayout = new QVBoxLayout(this);
+        mainLayout->addLayout(form);
+        mainLayout->addWidget(buttons);
+        setLayout(mainLayout);
+
+        resize(380, sizeHint().height());
+    }
+
+signals:
+    // 每次用户改动任一控件都会发出一次
+    void styleChanged(const ReaderStyle &style);
+
+private:
+    static void updateColorButton(QPushButton *btn, const QColor &color)
+    {
+        if (!btn) return;
+        const QString style = QStringLiteral(
+            "QPushButton { background-color: %1; border: 1px solid #444; }")
+            .arg(color.name(QColor::HexRgb));
+        btn->setText(QString());
+        btn->setStyleSheet(style);
+        btn->setFixedWidth(60);
+    }
+
+    ReaderStyle  m_style;
+    QSpinBox    *m_fontSizeSpin          = nullptr;
+    QSlider     *m_opacitySlider         = nullptr;
+    QPushButton *m_fontColorButton       = nullptr;
+    QPushButton *m_backgroundColorButton = nullptr;
+};
 
 class MainWindow;   // 前向声明
 
@@ -267,13 +501,13 @@ public:
             close();
         });
 
-        // Settings 占位
+                // Settings：打开阅读设置对话框（实时预览）
         connect(m_settingsButton, &QToolButton::clicked, this, [this]() {
-            QMessageBox::information(
-                this,
-                QStringLiteral("Settings"),
-                QStringLiteral("这里将来可以打开设置窗口（当前为占位逻辑）。"));
+            if (m_mainWindow) {
+                m_mainWindow->openSettingsDialog();
+            }
         });
+
 
         // 翻页按钮：始终可用（不受锁定影响）
         connect(m_prevPageButton, &QToolButton::clicked, this, [this]() {
@@ -525,6 +759,10 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setSpacing(0);
 
     m_view = new QWebEngineView(central);
+    // 让 Web 内容本身背景透明，避免露出默认的白底
+    m_view->setAttribute(Qt::WA_TranslucentBackground);
+    m_view->setStyleSheet(QStringLiteral("background: transparent;"));
+
     m_view->setContextMenuPolicy(Qt::NoContextMenu);
     m_view->installEventFilter(this);
     layout->addWidget(m_view, 1);
@@ -541,6 +779,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 使用自定义 QWebEnginePage（MarkdownPage）拦截链接点击
     auto *page = new MarkdownPage(m_view);
+    page->setBackgroundColor(Qt::transparent);  // 底色改成透明
     m_view->setPage(page);
     connect(page, &MarkdownPage::openMarkdown,
             this, &MainWindow::handleOpenMarkdownUrl);
@@ -566,6 +805,32 @@ MainWindow::MainWindow(QWidget *parent)
         m_lastOpenDir = defaultDir;
     }
 
+        // 读取阅读样式（如果没有则用默认值）
+    g_readerStyle.fontPointSize =
+        settings.value("reader/fontPointSize", g_readerStyle.fontPointSize).toInt();
+
+    const QString fontColorStr = settings.value("reader/fontColor").toString();
+    if (!fontColorStr.isEmpty()) {
+        const QColor c(fontColorStr);
+        if (c.isValid()) {
+            g_readerStyle.fontColor = c;
+        }
+    }
+
+    const QString bgColorStr = settings.value("reader/backgroundColor").toString();
+    if (!bgColorStr.isEmpty()) {
+        const QColor c(bgColorStr);
+        if (c.isValid()) {
+            g_readerStyle.backgroundColor = c;
+        }
+    }
+
+    g_readerStyle.backgroundOpacity =
+        settings.value("reader/backgroundOpacity", g_readerStyle.backgroundOpacity).toDouble();
+    if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.2;
+    if (g_readerStyle.backgroundOpacity > 1.0) g_readerStyle.backgroundOpacity = 1.0;
+
+
     const QUrl pageUrl = locateIndexPage();
     if (pageUrl.isValid()) {
         m_useEmbeddedViewer = true;
@@ -582,6 +847,9 @@ MainWindow::MainWindow(QWidget *parent)
                         m_pendingTitle.clear();
                         m_pendingBaseUrl.clear();
                     }
+                    if (ok) {
+                        applyReaderStyle();
+                    }
                 });
     } else {
         m_useEmbeddedViewer = false;
@@ -590,6 +858,7 @@ MainWindow::MainWindow(QWidget *parent)
         // 使用占位 HTML 渲染
         const QString html = placeholderHtml();
         m_view->setHtml(html);
+        applyReaderStyle();
     }
 
     // NEW: Windows 下注册全局热键 Ctrl+Alt+L，用来锁定/解锁
@@ -651,6 +920,82 @@ MainWindow::~MainWindow()
     }
 #endif
 }
+
+void MainWindow::openSettingsDialog()
+{
+    // 每次点击 Settings 新建一个对话框，关闭后自动 delete
+    auto *dlg = new ReaderSettingsDialog(g_readerStyle, this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+
+    // 实时更新：任何控件变化都会发出 styleChanged
+    connect(dlg, &ReaderSettingsDialog::styleChanged,
+            this, [this](const ReaderStyle &style) {
+                g_readerStyle = style;
+                applyReaderStyle();
+
+                // 同步保存到 QSettings，重启后仍然生效
+                QSettings settings("zhiz", "TransparentMdReader");
+                settings.setValue("reader/fontPointSize", g_readerStyle.fontPointSize);
+                settings.setValue("reader/fontColor", g_readerStyle.fontColor.name(QColor::HexRgb));
+                settings.setValue("reader/backgroundColor", g_readerStyle.backgroundColor.name(QColor::HexRgb));
+                settings.setValue("reader/backgroundOpacity", g_readerStyle.backgroundOpacity);
+            });
+
+    dlg->show();
+    dlg->raise();
+    dlg->activateWindow();
+}
+
+void MainWindow::applyReaderStyle()
+{
+    if (!m_view || !m_view->page()) {
+        return;
+    }
+
+    const QString fontSizeCss =
+        QString::number(g_readerStyle.fontPointSize) + QStringLiteral("px");
+    const QString fontColorCss =
+        colorToCssRgba(g_readerStyle.fontColor);
+    const QString bgCss =
+        colorToCssRgba(g_readerStyle.backgroundColor,
+                       g_readerStyle.backgroundOpacity);
+
+    const QString js = QStringLiteral(
+        "(function(){"
+        "  var fontSize = '%1';"
+        "  var fontColor = '%2';"
+        "  var bg = '%3';"
+        "  var styleId = 'tmr-reader-style';"
+        "  var doc = document;"
+        "  var head = doc.head || doc.getElementsByTagName('head')[0];"
+        "  if (!head) return;"
+        "  var style = doc.getElementById(styleId);"
+        "  if (!style) {"
+        "    style = doc.createElement('style');"
+        "    style.id = styleId;"
+        "    head.appendChild(style);"
+        "  }"
+        "  var css = '';"
+        // 1) 设置全局 CSS 变量：背景 / 前景色 / 字号
+        "  css += ':root{--md-font-size:' + fontSize + ';"
+        "                 --md-bg:' + bg + ';"
+        "                 --md-fg:' + fontColor + ';}';"
+        // 2) body：用于占位 HTML 的兜底样式
+        "  css += 'body{font-size:' + fontSize + ';"
+        "                 color:' + fontColor + ';"
+        "                 background:' + bg + ';}';"
+        // 3) 嵌入式阅读器结构：#md-root + .md-content
+        "  css += '.md-root{background-color:var(--md-bg);"
+        "                   color:var(--md-fg);}';"
+        "  css += '.md-content{font-size:var(--md-font-size);"
+        "                      color:var(--md-fg);}';"
+        "  style.textContent = css;"
+        "})();"
+    ).arg(fontSizeCss, fontColorCss, bgCss);
+
+    m_view->page()->runJavaScript(js);
+}
+
 
 void MainWindow::toggleLockByUser()
 {
@@ -1200,8 +1545,13 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
         return true;
     }
 
-    // 前端已就绪：直接渲染
+        // 前端已就绪：直接渲染
     renderMarkdownInPage(markdown, fi.fileName(), baseUrl);
     setWindowTitle(QStringLiteral("TransparentMdReader - %1").arg(fi.fileName()));
+
+    // 渲染完再套用一次当前阅读样式
+    applyReaderStyle();
     return true;
 }
+
+#include "MainWindow.moc"

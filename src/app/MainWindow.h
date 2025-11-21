@@ -42,6 +42,10 @@ public:
     void scrollPageUp();    // PageUp
     void scrollPageDown();  // PageDown
 
+    // 打开“阅读设置”对话框（非模态，实时预览）
+    void openSettingsDialog();
+
+
  public slots:
     void goBack();
     void goForward();   
@@ -100,6 +104,9 @@ private:
         // ===== 整窗拖动状态（未锁定时用） =====  // NEW
     bool   m_dragging      = false;
     QPoint m_dragStartPos;
+
+    // 应用当前阅读样式（字体 / 颜色 / 背景）到当前页面
+    void applyReaderStyle();
 
     // 当前是否“实际处于锁定（穿透）”状态
     bool m_locked = false;

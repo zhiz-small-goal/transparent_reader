@@ -10,6 +10,8 @@
   --md-font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
     sans-serif;
   --md-mono: "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    /* 新增：基础字号变量，默认 14px */
+  --md-font-size: 14px;
 }
 
 html,
@@ -59,7 +61,7 @@ body {
 .md-content {
   max-width: 860px;
   margin: 0 auto;
-  font-size: 14px;
+  font-size: var(--md-font-size);
 }
 
 /* 标题 */
