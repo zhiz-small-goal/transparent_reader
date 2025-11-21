@@ -38,6 +38,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QSpinBox>
+#include <QCheckBox>
 
 
 
@@ -182,6 +183,7 @@ struct ReaderStyle {
     QColor fontColor         = QColor(QStringLiteral("#f5f5f5"));  // 接近你占位页的默认颜色
     QColor backgroundColor   = QColor(45, 44, 44);         // 深灰色背景
     qreal  backgroundOpacity = 0.55;                       // 0.0 ~ 1.0
+    bool  showScrollbar      = false;                      // 默认隐藏右侧滚动条
 };
 
 // 当前全局阅读样式（单窗口应用，用一个全局即可）
@@ -366,6 +368,17 @@ public:
         opacityRow->addWidget(opacityLabel);
         form->addRow(QStringLiteral("背景透明度"), opacityRow);
 
+                // 是否显示右侧滚动条
+        m_scrollbarCheck = new QCheckBox(QStringLiteral("显示右侧滚动条"), this);
+        m_scrollbarCheck->setChecked(m_style.showScrollbar);
+        connect(m_scrollbarCheck, &QCheckBox::toggled,
+                this, [this](bool checked) {
+                    m_style.showScrollbar = checked;
+                    emit styleChanged(m_style);
+                });
+        form->addRow(QStringLiteral("滚动条"), m_scrollbarCheck);
+
+
         // 底部一个“关闭”按钮
         auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
         connect(buttons, &QDialogButtonBox::rejected,
@@ -402,6 +415,7 @@ private:
     QSlider     *m_opacitySlider         = nullptr;
     QPushButton *m_fontColorButton       = nullptr;
     QPushButton *m_backgroundColorButton = nullptr;
+    QCheckBox   *m_scrollbarCheck        = nullptr;
 };
 
 class MainWindow;   // 前向声明
@@ -577,6 +591,41 @@ public:
         move(frame.left(), frame.bottom());
     }
 
+    // 根据阅读样式同步按钮的颜色 / 透明度
+    void applyReaderUiStyle(const ReaderStyle &style)
+    {
+        // 前景色：跟随字体颜色；透明度跟随背景透明度
+        QColor fg = style.fontColor;
+        qreal alpha = style.backgroundOpacity;
+        if (alpha < 0.0) alpha = 0.0;
+        if (alpha > 1.0) alpha = 1.0;
+        fg.setAlphaF(alpha);
+
+        const QString cssColor = QStringLiteral("rgba(%1,%2,%3,%4)")
+                                     .arg(fg.red())
+                                     .arg(fg.green())
+                                     .arg(fg.blue())
+                                     .arg(fg.alphaF());
+
+        const QString btnStyle = QStringLiteral(
+            "QToolButton {"
+            "  background-color: transparent;"
+            "  border: none;"
+            "  color: %1;"
+            "}"
+            "QToolButton:hover {"
+            "  background-color: rgba(255, 255, 255, 0.08);"
+            "}"
+            "QToolButton:pressed {"
+            "  background-color: rgba(255, 255, 255, 0.16);"
+            "}"
+        ).arg(cssColor);
+
+        // 应用到整条 TitleBar 上，所有 QToolButton 子控件都会继承
+        setStyleSheet(btnStyle);
+    }
+
+
 protected:
     // 只在解锁状态时支持拖动整个阅读器窗口
     void mousePressEvent(QMouseEvent *event) override
@@ -741,11 +790,12 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     // 无边框 + 置顶 + 透明背景
-    setWindowFlags(windowFlags()
-                   | Qt::FramelessWindowHint
+    // 只保留我们需要的 flags：一个顶层透明窗，不要系统标题栏
+    setWindowFlags(Qt::FramelessWindowHint
                    | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setWindowOpacity(0.92);
+
 
     resize(720, 900);
     setMinimumSize(480, 600);
@@ -769,11 +819,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(central);
 
-    // 创建浮动按钮条（Settings / X），叠在 MainWindow 上方
+    // 创建浮动按钮条（上一篇/下一篇/翻页/锁定/设置/关闭）
     m_titleBar = new TitleBar(this);
     m_titleBar->syncFromWindowLockState(m_locked);
     m_titleBar->syncWithMainWindow();
+    m_titleBar->applyReaderUiStyle(g_readerStyle);  // 初始同步按钮的颜色 / 透明度
     m_titleBar->show();
+
 
 
 
@@ -933,12 +985,17 @@ void MainWindow::openSettingsDialog()
                 g_readerStyle = style;
                 applyReaderStyle();
 
+                if (m_titleBar) {
+                m_titleBar->applyReaderUiStyle(g_readerStyle);   // 第 3 点会用到，放在一起
+            }
+
                 // 同步保存到 QSettings，重启后仍然生效
                 QSettings settings("zhiz", "TransparentMdReader");
                 settings.setValue("reader/fontPointSize", g_readerStyle.fontPointSize);
                 settings.setValue("reader/fontColor", g_readerStyle.fontColor.name(QColor::HexRgb));
                 settings.setValue("reader/backgroundColor", g_readerStyle.backgroundColor.name(QColor::HexRgb));
                 settings.setValue("reader/backgroundOpacity", g_readerStyle.backgroundOpacity);
+                settings.setValue("reader/showScrollbar", g_readerStyle.showScrollbar);
             });
 
     dlg->show();
@@ -958,14 +1015,21 @@ void MainWindow::applyReaderStyle()
         colorToCssRgba(g_readerStyle.fontColor);
     const QString bgCss =
         colorToCssRgba(g_readerStyle.backgroundColor,
-                       g_readerStyle.backgroundOpacity);
+                    g_readerStyle.backgroundOpacity);
+    const QString scrollbarWidthCss =
+        g_readerStyle.showScrollbar
+            ? QStringLiteral("8px")
+            : QStringLiteral("0px");
+
 
     const QString js = QStringLiteral(
         "(function(){"
         "  var fontSize = '%1';"
         "  var fontColor = '%2';"
         "  var bg = '%3';"
+        "  var scrollbarWidth = '%4';"
         "  var styleId = 'tmr-reader-style';"
+
         "  var doc = document;"
         "  var head = doc.head || doc.getElementsByTagName('head')[0];"
         "  if (!head) return;"
@@ -978,8 +1042,10 @@ void MainWindow::applyReaderStyle()
         "  var css = '';"
         // 1) 设置全局 CSS 变量：背景 / 前景色 / 字号
         "  css += ':root{--md-font-size:' + fontSize + ';"
-        "                 --md-bg:' + bg + ';"
-        "                 --md-fg:' + fontColor + ';}';"
+        "         --md-bg:' + bg + ';"
+        "         --md-fg:' + fontColor + ';"
+        "         --md-scrollbar-width:' + scrollbarWidth + ';}';"
+
         // 2) body：用于占位 HTML 的兜底样式
         "  css += 'body{font-size:' + fontSize + ';"
         "                 color:' + fontColor + ';"
@@ -991,7 +1057,7 @@ void MainWindow::applyReaderStyle()
         "                      color:var(--md-fg);}';"
         "  style.textContent = css;"
         "})();"
-    ).arg(fontSizeCss, fontColorCss, bgCss);
+    ).arg(fontSizeCss, fontColorCss, bgCss, scrollbarWidthCss);
 
     m_view->page()->runJavaScript(js);
 }

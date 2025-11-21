@@ -12,6 +12,7 @@
   --md-mono: "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
     /* 新增：基础字号变量，默认 14px */
   --md-font-size: 14px;
+  --md-scrollbar-width: 0px; /* 默认隐藏滚动条 */
 }
 
 html,
@@ -194,9 +195,9 @@ body {
   margin-top: 0;
 }
 
-/* 滚动条稍微美化一下 */
+/* 滚动条稍微美化一下（宽度由变量控制） */
 .md-root::-webkit-scrollbar {
-  width: 8px;
+  width: var(--md-scrollbar-width);
 }
 
 .md-root::-webkit-scrollbar-track {
