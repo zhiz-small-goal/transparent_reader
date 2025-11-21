@@ -1096,10 +1096,23 @@ void MainWindow::applyReaderStyle()
         "           background: var(--md-bg);"
         "         }';"
 
-        // 3) 显式控制滚动条（命中 html / body / .md-root 三种容器）
-        "  css += 'html::-webkit-scrollbar{width:' + scrollbarWidth + ';}"
-        "          body::-webkit-scrollbar{width:' + scrollbarWidth + ';}"
-        "          .md-root::-webkit-scrollbar{width:' + scrollbarWidth + ';}';"
+                // 3) 显式控制滚动条（命中 html / body / .md-root 三种容器）
+        "  css += 'html::-webkit-scrollbar, body::-webkit-scrollbar, .md-root::-webkit-scrollbar{"
+        "           width:' + scrollbarWidth + ';"
+        "         }';"
+
+        // 滚动条轨道：透明，不抢背景
+        "  css += 'html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, .md-root::-webkit-scrollbar-track{"
+        "           background-color: rgba(0,0,0,0);"
+        "         }';"
+
+        // 滚动条 thumb：用一个固定的浅色，始终可见
+        "  css += 'html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, .md-root::-webkit-scrollbar-thumb{"
+        "           background-color: rgba(255, 255, 255, 0.35);"
+        "           border-radius: 6px;"
+        "         }';"
+
+        // 控制是否出现滚动条（有些平台 overlay 会保留滚轮）
         "  css += 'html, body{overflow-y:' + overflowY + ';}';"
 
         "  style.textContent = css;"
