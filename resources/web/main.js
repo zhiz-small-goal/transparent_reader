@@ -12,6 +12,10 @@
   }
 
   let gMarkdownBaseUrl = ""; // 用于解析相对链接
+  let gPendingScrollRatio = null;   // C++ 传入的初始滚动比例
+  let gPageReadyForScroll = false;  // DOMContentLoaded 之后为 true
+  let gScrollRetryHandle = null;
+  let gScrollRetryCount = 0;
 
   function isAbsoluteUrl(url) {
     if (!url) return false;
@@ -213,6 +217,100 @@
   }
 
   document.addEventListener("DOMContentLoaded", setupImageViewerOverlay);
+  document.addEventListener("DOMContentLoaded", () => {
+    gPageReadyForScroll = true;
+    if (gPendingScrollRatio !== null) {
+      scheduleApplyInitialScroll();
+    }
+  });
+
+  // ===============================
+  // 初始滚动恢复（供 C++ 调用）
+  // ===============================
+  function pickScrollContainer() {
+    const candidates = [
+      document.scrollingElement,
+      document.getElementById("md-root"),
+      ...document.querySelectorAll(".md-root, .markdown-body"),
+      document.documentElement,
+      document.body
+    ];
+    for (const el of candidates) {
+      if (!el) continue;
+      const max = el.scrollHeight - el.clientHeight;
+      if (max > 1) {
+        return { el, max };
+      }
+    }
+    const maxWin = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    return { el: window, max: maxWin };
+  }
+
+  function tryApplyInitialScroll() {
+    if (gPendingScrollRatio === null) return false;
+
+    const ratio = Math.max(0, Math.min(1, Number(gPendingScrollRatio)));
+    const { el, max } = pickScrollContainer();
+    const target = Math.round(max * ratio);
+
+    if (el === window) {
+      window.scrollTo(0, target);
+      const applied = Math.abs(window.scrollY - target) <= 2;
+      return applied;
+    }
+
+    el.scrollTop = target;
+    const applied = Math.abs(el.scrollTop - target) <= 2;
+    return applied;
+  }
+
+  function scheduleApplyInitialScroll() {
+    if (!gPageReadyForScroll) return;
+
+    if (gScrollRetryHandle) {
+      clearTimeout(gScrollRetryHandle);
+      gScrollRetryHandle = null;
+    }
+
+    function step() {
+      const ok = tryApplyInitialScroll();
+      if (ok) {
+        gPendingScrollRatio = null;
+        gScrollRetryCount = 0;
+        return true;
+      }
+      gScrollRetryCount += 1;
+      if (gScrollRetryCount > 8) {
+        return false;
+      }
+      gScrollRetryHandle = setTimeout(() => {
+        requestAnimationFrame(step);
+      }, 80);
+      return null;
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  window.setInitialScroll = function (ratio) {
+    gPendingScrollRatio = ratio;
+    gScrollRetryCount = 0;
+
+    // 若页面已就绪，先尝试一次立即应用
+    let appliedNow = false;
+    if (gPageReadyForScroll) {
+      appliedNow = tryApplyInitialScroll();
+      if (appliedNow) {
+        gPendingScrollRatio = null;
+        gScrollRetryCount = 0;
+      }
+    }
+
+    if (!appliedNow) {
+      scheduleApplyInitialScroll();
+    }
+    return appliedNow;
+  };
 
   // ===============================
   // C++ 调用的入口

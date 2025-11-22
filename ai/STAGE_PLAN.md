@@ -363,3 +363,18 @@
   - æ–°å¢ž `trimHistory()` ä¿è¯åˆ—è¡¨ä¸è¶…è¿‡ä¸Šé™ï¼ŒæŒä¹…åŒ–æ—¶åŒæ­¥ä¿å­˜ä¸Šé™ã€‚
   - ReaderSettingsDialog å¢žåŠ â€œåŽ†å²è®°å½•ä¸Šé™â€è¾“å…¥ï¼Œå˜æ›´å³è£å‰ªå¹¶ä¿å­˜ã€‚
 - çŠ¶æ€ï¼šå·²å®Œæˆ
+- - - 
+ 
+ # # #   2 0 2 5 - 1 1 - 2 3   †SòSNÚn¨Rî•˜˜’cågÿÅNš[MO	ÿ
+ 
+ -   9hnc(u7bÍSˆ™Àhåg†SòSü[*‚NÚn¨RMOnb`Yÿ*gîO9eãNx0
+ -   š[MOMRïz:\  ` s e t I n i t i a l S c r o l l `   ž[°sÿü[ô  S Q L i t e   -Nò]	gÚn¨R°‹U_FOb`YöeàeHeÿv^ˆ_ë_«ˆš[öehVÞV™Q:N  0 0
+ -   š[MO…Qè  ` . m d `   þ”¥cã‰gÅNÝOYu‡eöNTÿP[îvU_/ øvù[ï„_„vþ”¥cO«ˆ•ï‹ã‰g0RS_MRîvU_ü[ô ‡eöNNX[(W 0
+ -   š[MOê¨RSb _ gÑ‡eöNöeÿ‚Yœg g°e°‹U_ò]:1YOôv¥cÔÞVÿTí~	gHe°‹U_NO\Õ‹0 
+ # # #   2 0 2 5 - 1 1 - 2 3   Ún¨Rb`YN†SòSü[*‚îOYž[½e
+ 
+ -   MRïz°ežX  ` s e t I n i t i a l S c r o l l ` ÿD O M   1\ê~T&^Í‘Õ‹0Wb`YÚn¨RÿÔÞV<PÙ~  C + +   $R­e/f&TËzsSuHe0
+ -   C + +   ŒteÚn¨Rb`YI{…_—zãSÿMQb`Y*gŒ[böe«ˆš[öehV™QÞV  0 0
+ -   …Qè  ` . m d `   þ”¥cã‰g9e:NúWŽNS_MRîvU_„vŒ[teøvù[ï„_ÿÝOYuP[îvU_ŒT  ` . . ` 0
+ -   /T¨Rê¨RSb _ gÑ‡eöNöeÿ:1Y°‹U_OóÇv^ç~í~\Õ‹Tí~y˜0 
+ 

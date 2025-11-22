@@ -1673,31 +1673,34 @@ void MainWindow::showContextMenu(const QPoint &pos)
 
 // 文件：src/app/MainWindow.cpp
 // 说明：处理文内 .md 链接的点击（由 MarkdownPage::openMarkdown 信号触发）
-void MainWindow::handleOpenMarkdownUrl(const QUrl &url)  // CHANGED
+void MainWindow::handleOpenMarkdownUrl(const QUrl &url)
 {
-    // 还没有成功打开过任何 md，没法做内部跳转
     if (m_currentFilePath.isEmpty()) {
         return;
     }
 
-    // 从 URL 中提取“文件名”，不关心前面是 file:/// 还是 qrc:/ 等
-    const QString urlPath  = url.path();                   // 例如 /F:/.../4-introduction....md
-    const QString fileName = QFileInfo(urlPath).fileName();// 例如 4-introduction....md
-    const QString lower    = fileName.toLower();
-
-    // 只处理 .md / .markdown，其它一律忽略（http/https 已在 MarkdownPage 里处理）
+    const QString rawPath = url.isLocalFile() ? url.toLocalFile() : url.path();
+    const QString lower   = rawPath.toLower();
     if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
         return;
     }
 
-    // 目标路径 = 当前 md 所在目录 + 链接里的文件名
     QFileInfo curFi(m_currentFilePath);
-    QDir      baseDir(curFi.absolutePath());
-    const QString targetPath = baseDir.absoluteFilePath(fileName);
+    QDir baseDir(curFi.absolutePath());
+    QUrl baseUrl = QUrl::fromLocalFile(baseDir.absolutePath() + "/");
+    QUrl resolved = url;
+    if (url.isRelative() || url.scheme().isEmpty()) {
+        resolved = baseUrl.resolved(url);
+    }
 
-    // if (targetPath.isEmpty()) {
-    //     return;
-    // }
+    QString targetPath = resolved.toLocalFile();
+    if (targetPath.isEmpty()) {
+        targetPath = baseDir.absoluteFilePath(rawPath);
+    }
+
+    if (targetPath.isEmpty()) {
+        return;
+    }
 
     QFileInfo fi(targetPath);
     if (!fi.exists() || !fi.isFile()) {
@@ -1709,13 +1712,12 @@ void MainWindow::handleOpenMarkdownUrl(const QUrl &url)  // CHANGED
         return;
     }
 
-    // 统一走 openMarkdownFile：记忆目录 + 当前文件路径 + 渲染全部在里面
-    openMarkdownFile(fi.absoluteFilePath());
+    const QString finalPath = fi.canonicalFilePath().isEmpty()
+                                  ? fi.absoluteFilePath()
+                                  : fi.canonicalFilePath();
+    openMarkdownFile(finalPath);
 }
 
-
-// 文件：src/app/MainWindow.cpp
-// 处理图片链接点击：在阅读器内弹出图片浮层
 void MainWindow::handleOpenImageUrl(const QUrl &url)
 {
     QString localPath;
@@ -2110,10 +2112,14 @@ void MainWindow::applyScrollRatio(double ratio)
     if (clamped > 1.0) clamped = 1.0;
 
     const QString js = QStringLiteral(
-        "if (typeof setInitialScroll === 'function') { setInitialScroll(%1); }").arg(clamped, 0, 'f', 6);
+        "typeof setInitialScroll === 'function' ? setInitialScroll(%1) : false").arg(clamped, 0, 'f', 6);
     m_restoringScroll = true;
-    m_view->page()->runJavaScript(js, [this](const QVariant &) {
-        QTimer::singleShot(800, this, [this]() { m_restoringScroll = false; });
+    m_view->page()->runJavaScript(js, [this](const QVariant &v) {
+        const bool appliedImmediately = v.toBool();
+        const int waitMs = appliedImmediately ? 120 : 1500;
+        QTimer::singleShot(waitMs, this, [this]() {
+            m_restoringScroll = false;
+        });
     });
 }
 
@@ -2126,19 +2132,19 @@ void MainWindow::autoOpenLastFileIfNeeded()
         return;
     }
 
-    const auto recents = StateDbManager::instance().listRecent(1);
-    if (recents.isEmpty()) {
+    const auto recents = StateDbManager::instance().listRecent(10);
+    for (const auto &entry : recents) {
+        QFileInfo fi(entry.path);
+        if (!fi.exists() || !fi.isFile()) {
+            StateDbManager::instance().markMissing(entry.path);
+            continue;
+        }
+        const QString finalPath = fi.canonicalFilePath().isEmpty()
+                                      ? fi.absoluteFilePath()
+                                      : fi.canonicalFilePath();
+        openMarkdownFile(finalPath);
         return;
     }
-
-    const QString path = recents.first().path;
-    QFileInfo fi(path);
-    if (!fi.exists() || !fi.isFile()) {
-        StateDbManager::instance().markMissing(path);
-        return;
-    }
-
-    openMarkdownFile(path);
 }
 
 #include "MainWindow.moc"
