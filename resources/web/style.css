@@ -20,6 +20,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
+  scroll-behavior: auto;
 }
 
 body {
@@ -27,6 +28,10 @@ body {
   color: var(--md-fg);
   font-family: var(--md-font);
   line-height: 1.6;
+}
+
+body.pre-scroll-hidden {
+  visibility: hidden;
 }
 
 /* 根容器：一个半透明深色卡片，贴合透明窗体 */
