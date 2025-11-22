@@ -92,6 +92,7 @@ private:
     void createSystemTray();
     void updateTrayChecks();
     void applyScrollRatio(double ratio);
+    void autoOpenLastFileIfNeeded();
 
 private:
     QWebEngineView *m_view         = nullptr;
@@ -118,6 +119,7 @@ private:
     QString m_pendingBaseUrl;
     QTimer *m_scrollTimer       = nullptr;
     double  m_lastScrollRatio   = 0.0;
+    bool    m_restoringScroll   = false;
 
         // ===== 整窗拖动状态（未锁定时用） =====  // NEW
     bool   m_dragging      = false;

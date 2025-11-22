@@ -992,6 +992,9 @@ MainWindow::MainWindow(QWidget *parent)
         if (!m_pageLoaded) {
             return;
         }
+        if (m_restoringScroll) {
+            return;
+        }
         const QString js = QStringLiteral(
             R"JS(
 (() => {
@@ -1141,44 +1144,7 @@ MainWindow::MainWindow(QWidget *parent)
         applyReaderStyle();
     }
     createSystemTray();
-
-    void MainWindow::applyScrollRatio(double ratio)
-{
-    if (!m_view || !m_view->page() || ratio < 0.0) {
-        return;
-    }
-    double clamped = ratio;
-    if (clamped > 1.0) clamped = 1.0;
-
-    const QString js = QStringLiteral(
-        R"JS(
-(() => {
-  const ratio = %1;
-  const clamp = Math.max(0, Math.min(1, ratio));
-  const candidates = [
-    document.scrollingElement,
-    document.documentElement,
-    document.body,
-    document.getElementById('md-root'),
-    ...document.querySelectorAll('.md-root, .markdown-body')
-  ];
-  for (const el of candidates) {
-    if (!el) continue;
-    const max = el.scrollHeight - el.clientHeight;
-    if (max > 1) {
-      el.scrollTop = max * clamp;
-      return true;
-    }
-  }
-  const doc = document.documentElement;
-  const max = Math.max(1, doc.scrollHeight - window.innerHeight);
-  window.scrollTo({ top: max * clamp, behavior: 'auto' });
-  return true;
-})();
-)JS");
-
-    m_view->page()->runJavaScript(js);
-}
+    autoOpenLastFileIfNeeded();
 
 // NEW: Windows 下注册全局热键 Ctrl+Alt+L，用来锁定/解锁
 // #ifdef Q_OS_WIN
@@ -2056,6 +2022,78 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
     applyScrollRatio(m_lastScrollRatio);
     StateDbManager::instance().recordOpen(m_currentFilePath, fi.lastModified().toSecsSinceEpoch(), fi.size());
     return true;
+}
+
+void MainWindow::applyScrollRatio(double ratio)
+{
+    if (!m_view || !m_view->page() || ratio < 0.0) {
+        return;
+    }
+    double clamped = ratio;
+    if (clamped > 1.0) clamped = 1.0;
+
+    const QString js = QStringLiteral(
+        R"JS(
+(() => {
+  const ratio = %1;
+  const clamp = Math.max(0, Math.min(1, ratio));
+  const apply = () => {
+    const candidates = [
+      document.scrollingElement,
+      document.documentElement,
+      document.body,
+      document.getElementById('md-root'),
+      ...document.querySelectorAll('.md-root, .markdown-body')
+    ];
+    for (const el of candidates) {
+      if (!el) continue;
+      const max = el.scrollHeight - el.clientHeight;
+      if (max > 1) {
+        el.scrollTop = max * clamp;
+        return true;
+      }
+    }
+    const doc = document.documentElement;
+    const max = Math.max(1, doc.scrollHeight - window.innerHeight);
+    window.scrollTo({ top: max * clamp, behavior: 'auto' });
+    return true;
+  };
+  if (document.readyState === 'complete') {
+    requestAnimationFrame(apply);
+  } else {
+    window.addEventListener('load', () => requestAnimationFrame(apply), { once: true });
+  }
+  return true;
+})();
+)JS").arg(clamped);
+
+    m_view->page()->runJavaScript(js);
+    m_restoringScroll = true;
+    QTimer::singleShot(800, this, [this]() { m_restoringScroll = false; });
+}
+
+
+void MainWindow::autoOpenLastFileIfNeeded()
+{
+    QSettings settings("zhiz", "TransparentMdReader");
+    const bool openLast = settings.value("startup/openLastFile", true).toBool();
+    if (!openLast) {
+        return;
+    }
+
+    const auto recents = StateDbManager::instance().listRecent(1);
+    if (recents.isEmpty()) {
+        return;
+    }
+
+    const QString path = recents.first().path;
+    QFileInfo fi(path);
+    if (!fi.exists() || !fi.isFile()) {
+        StateDbManager::instance().markMissing(path);
+        return;
+    }
+
+    openMarkdownFile(path);
 }
 
 #include "MainWindow.moc"

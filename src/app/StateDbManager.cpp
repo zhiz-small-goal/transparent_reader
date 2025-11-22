@@ -204,6 +204,20 @@ bool StateDbManager::updateScroll(const QString &path, double ratio)
     return runPrepared(query);
 }
 
+bool StateDbManager::markMissing(const QString &path)
+{
+    if (!open()) {
+        return false;
+    }
+    const QString norm = normalizePath(path);
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("state"));
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "UPDATE documents SET last_open_time=0 WHERE path=:path;"));
+    query.bindValue(QStringLiteral(":path"), norm);
+    return runPrepared(query);
+}
+
 double StateDbManager::loadScroll(const QString &path) const
 {
     if (!m_ready && !const_cast<StateDbManager *>(this)->open()) {
