@@ -290,3 +290,11 @@
 - è‡ªå¯ä»…åœ¨ Windows ä½¿ç”¨ HKCU\\...\\Run å†™å…¥å½“å‰å¯æ‰§è¡Œè·¯å¾„ï¼Œå¤±è´¥æ—¶å›žé€€å‹¾é€‰å¹¶æç¤ºã€‚
 - æ—¥å¿—è®°å½•é€šè¿‡å…¨å±€ message handler è¿½åŠ åˆ° AppData è·¯å¾„ä¸‹ transparent_reader.logï¼Œå…³é—­æ—¶æ¢å¤åŽŸæ¶ˆæ¯å¤„ç†å™¨é¿å…æ³„æ¼ã€‚
 - æ‰˜ç›˜ä»…åœ¨ç³»ç»Ÿæ”¯æŒæ‰˜ç›˜æ—¶åˆ›å»ºï¼Œå·¦/åŒå‡»æ‰˜ç›˜ä¼šæ˜¾ç¤ºå¹¶æ¿€æ´»ä¸»çª—å£ã€‚
+---
+
+### 2025-11-21 ·­Ò³°´Å¥Ê§Ð§ÐÞ¸´
+
+- ÏÖÏó£º±êÌâÀ¸·­Ò³°´Å¥£¨ÉÏÒ»ÆÁ/ÏÂÒ»ÆÁ£©µã»÷ÎÞÐ§£¬¹öÂÖ·­Ò³Õý³£¡£
+- Ô­Òò£º·­Ò³Âß¼­Ö»µ÷ÓÃ `window.scrollBy`£¬Î´ÃüÖÐÊµ¼Ê¿É¹ö¶¯ÈÝÆ÷£»ÇÒÒþ²Ø¹ö¶¯ÌõÅäÖÃÒ×µ¼ÖÂ¹ö¶¯±»½û¡£
+- ·½°¸£ºÔÚ `MainWindow::scrollPageUp/Down` ÖÐÊ¹ÓÃ JS ÒÀ´Î³¢ÊÔ `scrollingElement`/`documentElement`/`body`/`#md-root`/`.md-root`/`.markdown-body`£¬ÕÒµ½¿É¹ö¶¯ÈÝÆ÷ºóµ÷Õû `scrollTop`£»ÎÞÃüÖÐÊ±ÔÙ»ØÍË `window.scrollBy`¡£
+- ×´Ì¬£ºÒÑÍê³É

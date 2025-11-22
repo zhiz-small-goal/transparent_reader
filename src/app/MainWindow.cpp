@@ -638,6 +638,13 @@ public:
         m_nextDocButton->setToolTip(QStringLiteral("历史记录前进到下一文件"));
         layout->addWidget(m_nextDocButton);
 
+        // 锁定状态按钮：🔒 / 🔓
+        m_lockButton = new QToolButton(this);
+        m_lockButton->setText(QStringLiteral("🔒"));
+        m_lockButton->setToolTip(
+            QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁，或点击此按钮解除锁定。"));
+        layout->addWidget(m_lockButton);
+
         // 一屏翻页按钮（上一屏 / 下一屏）
         m_prevPageButton = new QToolButton(this);
         m_prevPageButton->setText(QStringLiteral("▲"));
@@ -648,13 +655,6 @@ public:
         m_nextPageButton->setText(QStringLiteral("▼"));
         m_nextPageButton->setToolTip(QStringLiteral("下一屏（向下翻页）"));
         layout->addWidget(m_nextPageButton);
-
-        // 锁定状态按钮：🔒 / 🔓
-        m_lockButton = new QToolButton(this);
-        m_lockButton->setText(QStringLiteral("🔒"));
-        m_lockButton->setToolTip(
-            QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁，或点击此按钮解除锁定。"));
-        layout->addWidget(m_lockButton);
 
         // Settings 按钮
         m_settingsButton = new QToolButton(this);
@@ -1194,8 +1194,9 @@ void MainWindow::applyReaderStyle()
         colorToCssRgba(g_readerStyle.backgroundColor, g_readerStyle.backgroundOpacity);
     const QString scrollbarWidthCss =
         g_readerStyle.showScrollbar ? QStringLiteral("8px") : QStringLiteral("0px");
+    // 隐藏滚动条但仍允许滚动，使用 auto+宽度0 兼顾滚轮/翻页按钮
     const QString overflowCss =
-        g_readerStyle.showScrollbar ? QStringLiteral("overlay") : QStringLiteral("hidden");
+        g_readerStyle.showScrollbar ? QStringLiteral("overlay") : QStringLiteral("auto");
 
     const QString js = QStringLiteral(
         "(function(){"
@@ -1734,10 +1735,30 @@ void MainWindow::scrollPageUp()    // NEW
     if (!m_view) {
         return;
     }
-    // 使用 JavaScript 让页面内容向上滚一屏
+    // ?? JavaScript ????????????? 50%???????????
     const QString js = QStringLiteral(
-        "window.scrollBy(0, -window.innerHeight * 0.5);" 
-    );
+        R"JS(
+(() => {
+  const delta = window.innerHeight * 0.5;
+  const candidates = [
+    document.scrollingElement,
+    document.documentElement,
+    document.body,
+    document.getElementById('md-root'),
+    ...document.querySelectorAll('.md-root, .markdown-body')
+  ];
+  for (const el of candidates) {
+    if (!el) continue;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll > 1) {
+      el.scrollTop = Math.max(0, el.scrollTop - delta);
+      return true;
+    }
+  }
+  window.scrollBy(0, -delta);
+  return true;
+})();
+)JS");
     m_view->page()->runJavaScript(js);
 }
 
@@ -1746,13 +1767,32 @@ void MainWindow::scrollPageDown()  // NEW
     if (!m_view) {
         return;
     }
-    // 使用 JavaScript 让页面内容向下滚一屏
+    // ?? JavaScript ????????????? 50%???????????
     const QString js = QStringLiteral(
-        "window.scrollBy(0, window.innerHeight * 0.5);"
-    );
+        R"JS(
+(() => {
+  const delta = window.innerHeight * 0.5;
+  const candidates = [
+    document.scrollingElement,
+    document.documentElement,
+    document.body,
+    document.getElementById('md-root'),
+    ...document.querySelectorAll('.md-root, .markdown-body')
+  ];
+  for (const el of candidates) {
+    if (!el) continue;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll > 1) {
+      el.scrollTop = Math.min(maxScroll, el.scrollTop + delta);
+      return true;
+    }
+  }
+  window.scrollBy(0, delta);
+  return true;
+})();
+)JS");
     m_view->page()->runJavaScript(js);
 }
-
 // 文件：src/app/MainWindow.cpp
 // 作用：在未锁定状态下实现：
 //   - 左键拖动整窗
