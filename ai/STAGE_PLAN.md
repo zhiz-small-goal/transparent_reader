@@ -351,3 +351,15 @@
   - 新增滚动比率读取/写入接口使用：打开文件后从 SQLite 读取进度并应用到页面；滚动时定时读取页面滚动比例并写入数据库。
   - 增加 `applyScrollRatio` 和定时器，优先命中实际滚动容器（scrollingElement/#md-root/.markdown-body），找不到则回退到 window.scroll。
 - 状态：已完成
+
+### 2025-11-22 历史记录持久化与上限设置
+
+- 目标：历史前进/后退跨重启保持有效，并可配置上限，避免无限增长。
+- 涉及文件：
+  - src/app/MainWindow.h
+  - src/app/MainWindow.cpp
+- 改动概览：
+  - 历史列表持久化到 QSettings，启动加载；新增默认上限 20，添加设置对话框输入（1~200）。
+  - 新增 `trimHistory()` 保证列表不超过上限，持久化时同步保存上限。
+  - ReaderSettingsDialog 增加“历史记录上限”输入，变更即裁剪并保存。
+- 状态：已完成

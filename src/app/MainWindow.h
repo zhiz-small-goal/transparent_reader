@@ -93,6 +93,9 @@ private:
     void updateTrayChecks();
     void applyScrollRatio(double ratio);
     void autoOpenLastFileIfNeeded();
+    void persistHistory();
+    void loadHistoryFromSettings();
+    void trimHistory();
 
 private:
     QWebEngineView *m_view         = nullptr;
@@ -120,6 +123,7 @@ private:
     QTimer *m_scrollTimer       = nullptr;
     double  m_lastScrollRatio   = 0.0;
     bool    m_restoringScroll   = false;
+    int     m_historyLimit      = 20;
 
         // ===== 整窗拖动状态（未锁定时用） =====  // NEW
     bool   m_dragging      = false;

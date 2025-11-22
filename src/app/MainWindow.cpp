@@ -355,9 +355,11 @@ class ReaderSettingsDialog : public QDialog
     Q_OBJECT
 public:
     explicit ReaderSettingsDialog(const ReaderStyle &initialStyle,
+                                  int historyLimit,
                                   QWidget *parent = nullptr)
         : QDialog(parent)
         , m_style(initialStyle)
+        , m_historyLimit(historyLimit)
     {
         setWindowTitle(QStringLiteral("阅读设置"));
         // 小工具窗 + 置顶，方便一边调一边看效果
@@ -557,6 +559,17 @@ public:
                 });
         form->addRow(QStringLiteral("滚动条"), m_scrollbarCheck);
 
+        // 历史记录上限
+        m_historyLimitSpin = new QSpinBox(this);
+        m_historyLimitSpin->setRange(1, 200);
+        m_historyLimitSpin->setValue(m_historyLimit);
+        connect(m_historyLimitSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+                this, [this](int v) {
+                    m_historyLimit = v;
+                    emit historyLimitChanged(v);
+                });
+        form->addRow(QStringLiteral("历史记录上限"), m_historyLimitSpin);
+
 
         // 底部一个“关闭”按钮
         auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
@@ -576,6 +589,7 @@ public:
 signals:
     // 每次用户改动任一控件都会发出一次
     void styleChanged(const ReaderStyle &style);
+    void historyLimitChanged(int limit);
 
 private:
     static void updateColorButton(QPushButton *btn, const QColor &color)
@@ -596,6 +610,8 @@ private:
     QPushButton *m_fontColorButton       = nullptr;
     QPushButton *m_backgroundColorButton = nullptr;
     QCheckBox   *m_scrollbarCheck        = nullptr;
+    QSpinBox    *m_historyLimitSpin      = nullptr;
+    int          m_historyLimit          = 20;
 };
 
 class MainWindow;   // 前向声明
@@ -1073,7 +1089,9 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
         // 读取阅读样式（如果没有则用默认值）
-    g_readerStyle.fontPointSize =
+        loadHistoryFromSettings();
+
+g_readerStyle.fontPointSize =
         settings.value("reader/fontPointSize", g_readerStyle.fontPointSize).toInt();
 
     const QString fontColorStr = settings.value("reader/fontColor").toString();
@@ -1102,6 +1120,8 @@ MainWindow::MainWindow(QWidget *parent)
         settings.value("reader/backgroundOpacity", g_readerStyle.backgroundOpacity).toDouble();
     if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.2;
     if (g_readerStyle.backgroundOpacity > 1.0) g_readerStyle.backgroundOpacity = 1.0;
+
+    loadHistoryFromSettings();
 
     m_autoStartEnabled = queryAutoStartEnabled();
     m_loggingEnabled = settings.value("logging/enabled", false).toBool();
@@ -1212,7 +1232,7 @@ MainWindow::~MainWindow()
 void MainWindow::openSettingsDialog()
 {
     // 每次点击 Settings 新建一个对话框，关闭后自动 delete
-    auto *dlg = new ReaderSettingsDialog(g_readerStyle, this);
+    auto *dlg = new ReaderSettingsDialog(g_readerStyle, m_historyLimit, this);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
 
     // 实时更新：任何控件变化都会发出 styleChanged
@@ -1233,6 +1253,12 @@ void MainWindow::openSettingsDialog()
                 settings.setValue("reader/backgroundColor", g_readerStyle.backgroundColor.name(QColor::HexRgb));
                 settings.setValue("reader/backgroundOpacity", g_readerStyle.backgroundOpacity);
                 settings.setValue("reader/showScrollbar", g_readerStyle.showScrollbar);
+            });
+    connect(dlg, &ReaderSettingsDialog::historyLimitChanged,
+            this, [this](int limit) {
+                m_historyLimit = qBound(1, limit, 200);
+                trimHistory();
+                persistHistory();
             });
 
     dlg->show();
@@ -1594,6 +1620,7 @@ void MainWindow::goBack()
         m_historyIndex = targetIndex;
     }
     updateNavigationActions();
+    persistHistory();
 }
 
 void MainWindow::goForward()
@@ -1609,6 +1636,7 @@ void MainWindow::goForward()
         m_historyIndex = targetIndex;
     }
     updateNavigationActions();
+    persistHistory();
 }
 
 void MainWindow::showContextMenu(const QPoint &pos)
@@ -1994,7 +2022,9 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
             m_history.append(m_currentFilePath);
         }
         m_historyIndex = m_history.size() - 1;
+        trimHistory();
         updateNavigationActions();
+        persistHistory();
     }
 
     // 准备传给前端的 baseUrl
@@ -2022,6 +2052,53 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
     applyScrollRatio(m_lastScrollRatio);
     StateDbManager::instance().recordOpen(m_currentFilePath, fi.lastModified().toSecsSinceEpoch(), fi.size());
     return true;
+}
+
+
+void MainWindow::persistHistory()
+{
+    QSettings settings("zhiz", "TransparentMdReader");
+    settings.setValue("history/list", m_history);
+    settings.setValue("history/index", m_historyIndex);
+    settings.setValue("history/limit", m_historyLimit);
+}
+
+void MainWindow::loadHistoryFromSettings()
+{
+    QSettings settings("zhiz", "TransparentMdReader");
+    m_historyLimit = settings.value("history/limit", 20).toInt();
+    if (m_historyLimit < 1) m_historyLimit = 20;
+    if (m_historyLimit > 200) m_historyLimit = 200;
+
+    const QStringList list = settings.value("history/list").toStringList();
+    int index = settings.value("history/index", -1).toInt();
+    m_history = list;
+    trimHistory();
+    if (m_history.isEmpty()) {
+        m_historyIndex = -1;
+    } else {
+        if (index < 0 || index >= m_history.size()) {
+            index = m_history.size() - 1;
+        }
+        m_historyIndex = index;
+    }
+    updateNavigationActions();
+}
+
+void MainWindow::trimHistory()
+{
+    if (m_historyLimit < 1) {
+        m_historyLimit = 20;
+    }
+    while (m_history.size() > m_historyLimit) {
+        m_history.removeFirst();
+        if (m_historyIndex > 0) {
+            --m_historyIndex;
+        }
+    }
+    if (m_historyIndex >= m_history.size()) {
+        m_historyIndex = m_history.isEmpty() ? -1 : m_history.size() - 1;
+    }
 }
 
 void MainWindow::applyScrollRatio(double ratio)
