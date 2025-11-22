@@ -10,6 +10,7 @@
 #include <QtCore/qglobal.h>
 #include <QEvent>
 #include <QSystemTrayIcon>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -90,6 +91,7 @@ private:
     void updateClickThroughState();
     void createSystemTray();
     void updateTrayChecks();
+    void applyScrollRatio(double ratio);
 
 private:
     QWebEngineView *m_view         = nullptr;
@@ -114,6 +116,8 @@ private:
     QString m_pendingMarkdown;
     QString m_pendingTitle;
     QString m_pendingBaseUrl;
+    QTimer *m_scrollTimer       = nullptr;
+    double  m_lastScrollRatio   = 0.0;
 
         // ===== 整窗拖动状态（未锁定时用） =====  // NEW
     bool   m_dragging      = false;

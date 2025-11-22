@@ -982,6 +982,52 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(central);
 
+    // 定时读取页面滚动比例并写入状态库（节流）
+    m_scrollTimer = new QTimer(this);
+    m_scrollTimer->setInterval(500);
+    connect(m_scrollTimer, &QTimer::timeout, this, [this]() {
+        if (!m_view || !m_view->page() || m_currentFilePath.isEmpty()) {
+            return;
+        }
+        if (!m_pageLoaded) {
+            return;
+        }
+        const QString js = QStringLiteral(
+            R"JS(
+(() => {
+  const candidates = [
+    document.scrollingElement,
+    document.documentElement,
+    document.body,
+    document.getElementById('md-root'),
+    ...document.querySelectorAll('.md-root, .markdown-body')
+  ];
+  for (const el of candidates) {
+    if (!el) continue;
+    const max = el.scrollHeight - el.clientHeight;
+    if (max > 1) {
+      return Math.max(0, Math.min(1, el.scrollTop / max));
+    }
+  }
+  const doc = document.documentElement;
+  const max = Math.max(1, doc.scrollHeight - window.innerHeight);
+  return Math.max(0, Math.min(1, window.scrollY / max));
+})();
+)JS");
+        m_view->page()->runJavaScript(js, [this](const QVariant &v) {
+            const double ratio = v.toDouble();
+            if (ratio < 0.0 || ratio > 1.0) {
+                return;
+            }
+            if (qAbs(ratio - m_lastScrollRatio) < 0.001) {
+                return;
+            }
+            m_lastScrollRatio = ratio;
+            StateDbManager::instance().updateScroll(m_currentFilePath, ratio);
+        });
+    });
+    m_scrollTimer->start();
+
     // 初始化状态数据库（使用默认路径）
     StateDbManager::instance().open();
 
@@ -1079,6 +1125,10 @@ MainWindow::MainWindow(QWidget *parent)
                     }
                     if (ok) {
                         applyReaderStyle();
+                        if (!m_currentFilePath.isEmpty()) {
+                            m_lastScrollRatio = StateDbManager::instance().loadScroll(m_currentFilePath);
+                            applyScrollRatio(m_lastScrollRatio);
+                        }
                     }
                 });
     } else {
@@ -1092,7 +1142,45 @@ MainWindow::MainWindow(QWidget *parent)
     }
     createSystemTray();
 
-    // NEW: Windows 下注册全局热键 Ctrl+Alt+L，用来锁定/解锁
+    void MainWindow::applyScrollRatio(double ratio)
+{
+    if (!m_view || !m_view->page() || ratio < 0.0) {
+        return;
+    }
+    double clamped = ratio;
+    if (clamped > 1.0) clamped = 1.0;
+
+    const QString js = QStringLiteral(
+        R"JS(
+(() => {
+  const ratio = %1;
+  const clamp = Math.max(0, Math.min(1, ratio));
+  const candidates = [
+    document.scrollingElement,
+    document.documentElement,
+    document.body,
+    document.getElementById('md-root'),
+    ...document.querySelectorAll('.md-root, .markdown-body')
+  ];
+  for (const el of candidates) {
+    if (!el) continue;
+    const max = el.scrollHeight - el.clientHeight;
+    if (max > 1) {
+      el.scrollTop = max * clamp;
+      return true;
+    }
+  }
+  const doc = document.documentElement;
+  const max = Math.max(1, doc.scrollHeight - window.innerHeight);
+  window.scrollTo({ top: max * clamp, behavior: 'auto' });
+  return true;
+})();
+)JS");
+
+    m_view->page()->runJavaScript(js);
+}
+
+// NEW: Windows 下注册全局热键 Ctrl+Alt+L，用来锁定/解锁
 // #ifdef Q_OS_WIN
 //     {
 //         HWND hwnd = reinterpret_cast<HWND>(winId());  // 确保创建 HWND
@@ -1964,6 +2052,8 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
 
     // 渲染完再套用一次当前阅读样式
     applyReaderStyle();
+    m_lastScrollRatio = StateDbManager::instance().loadScroll(m_currentFilePath);
+    applyScrollRatio(m_lastScrollRatio);
     StateDbManager::instance().recordOpen(m_currentFilePath, fi.lastModified().toSecsSinceEpoch(), fi.size());
     return true;
 }

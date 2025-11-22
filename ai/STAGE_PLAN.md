@@ -338,3 +338,16 @@
   - CMake 增加 Qt6::Sql 依赖，编译新文件；main.cpp 设置 Organization/ApplicationName 以使用标准 AppData 路径。
   - MainWindow 构造时初始化状态库，openMarkdownFile 成功后写入文件 mtime/size 和 last_open_time 到 SQLite。
 - 状态：已完成
+
+### 2025-11-22 接入SQLite阅读进度
+
+- 目标：将阅读进度持久化到 SQLite，并在打开文档时恢复。
+- 涉及文件：
+  - src/app/StateDbManager.h
+  - src/app/StateDbManager.cpp
+  - src/app/MainWindow.h
+  - src/app/MainWindow.cpp
+- 改动概览：
+  - 新增滚动比率读取/写入接口使用：打开文件后从 SQLite 读取进度并应用到页面；滚动时定时读取页面滚动比例并写入数据库。
+  - 增加 `applyScrollRatio` 和定时器，优先命中实际滚动容器（scrollingElement/#md-root/.markdown-body），找不到则回退到 window.scroll。
+- 状态：已完成
