@@ -7,6 +7,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Widgets
     WebEngineWidgets
     WebChannel
+    Sql
 )
 
 # 2. 启用 Qt 标准项目设置（里面会自动开 AUTOMOC / AUTOUIC / AUTORCC）
@@ -31,6 +32,8 @@ qt_add_executable(TransparentMdReader
     app/MainWindow.h
     app/MarkdownPage.cpp
     app/MarkdownPage.h
+    app/StateDbManager.cpp
+    app/StateDbManager.h
 )
 
 # 4. 链接 Qt 库
@@ -40,6 +43,7 @@ target_link_libraries(TransparentMdReader PRIVATE
     Qt6::Widgets
     Qt6::WebEngineWidgets
     Qt6::WebChannel
+    Qt6::Sql
 )
 
 # 5. Windows 上去掉控制台黑框

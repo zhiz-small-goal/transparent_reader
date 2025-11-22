@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "MarkdownPage.h"
+#include "StateDbManager.h"
 
 #include <QAction>
 #include <QApplication>
@@ -981,6 +982,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(central);
 
+    // 初始化状态数据库（使用默认路径）
+    StateDbManager::instance().open();
+
     // 创建浮动按钮条（上一篇/下一篇/翻页/锁定/设置/关闭）
     m_titleBar = new TitleBar(this);
     m_titleBar->syncFromWindowLockState(m_locked);
@@ -1925,6 +1929,9 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
     QString markdown = in.readAll();
     file.close();
 
+    const qint64 fileMtime = fi.lastModified().toSecsSinceEpoch();
+    const qint64 fileSize  = fi.size();
+
     if (addToHistory) {
         while (m_history.size() > m_historyIndex + 1) {
             m_history.removeLast();
@@ -1957,6 +1964,7 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
 
     // 渲染完再套用一次当前阅读样式
     applyReaderStyle();
+    StateDbManager::instance().recordOpen(m_currentFilePath, fi.lastModified().toSecsSinceEpoch(), fi.size());
     return true;
 }
 

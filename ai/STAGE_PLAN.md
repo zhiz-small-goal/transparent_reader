@@ -292,9 +292,49 @@
 - 托盘仅在系统支持托盘时创建，左/双击托盘会显示并激活主窗口。
 ---
 
-### 2025-11-21 ��ҳ��ťʧЧ�޸�
+## 阶段 6：2025-11-21 新增托盘菜单与自启/日志开关
 
-- ���󣺱�������ҳ��ť����һ��/��һ���������Ч�����ַ�ҳ������
-- ԭ�򣺷�ҳ�߼�ֻ���� `window.scrollBy`��δ����ʵ�ʿɹ��������������ع����������׵��¹���������
-- �������� `MainWindow::scrollPageUp/Down` ��ʹ�� JS ���γ��� `scrollingElement`/`documentElement`/`body`/`#md-root`/`.md-root`/`.markdown-body`���ҵ��ɹ������������ `scrollTop`��������ʱ�ٻ��� `window.scrollBy`��
-- ״̬�������
+日期：2025-11-21  
+状态：已完成
+
+目标：
+- 托盘集中提供打开文件、自启切换、日志记录和退出入口
+- 自启状态按系统实际注册表同步，日志开关可即时生效
+- 托盘左/双击可快速唤起主窗口
+
+涉及文件：
+- F:/zhiz-c++/transparent_reader/src/app/MainWindow.cpp
+- F:/zhiz-c++/transparent_reader/src/app/MainWindow.h
+
+改动概览：
+- MainWindow.cpp：新增自启/日志辅助函数（注册表读写、文件日志 handler），初始化时创建托盘；实现托盘菜单与点击行为；处理自启/日志勾选的状态同步与错误提示，退出时清理日志 handler。
+- MainWindow.h：加入托盘成员与槽声明，记录自启、日志开关状态。
+
+关键点说明：
+- 自启仅在 Windows 使用 HKCU\...\Run 写入当前可执行路径，失败时回退勾选并提示。
+- 日志记录通过全局 message handler 追加到 AppData 路径下的 transparent_reader.log，关闭时恢复原消息处理器避免泄漏。
+- 托盘仅在系统支持托盘时创建，左/双击托盘会显示并激活主窗口。
+
+---
+
+### 2025-11-22 翻页按钮失效修复
+
+- 现象：标题栏翻页按钮（上一屏/下一屏）点击无效，滚轮翻页正常。
+- 原因：翻页逻辑仅调用 `window.scrollBy` 未命中实际可滚动容器；隐藏滚动条时容易阻断滚动。
+- 方案：在 `MainWindow::scrollPageUp/Down` 中使用 JS 依次尝试 `scrollingElement` / `documentElement` / `body` / `#md-root` / `.md-root` / `.markdown-body`，找到可滚动容器后调整 `scrollTop`，无命中时回退 `window.scrollBy`。
+- 状态：已完成
+
+### 2025-11-22 引入SQLite状态库骨架
+
+- 目标：使用 SQLite 统一持久化最近文件、阅读进度等文件级状态，铺设后续历史记录功能。
+- 涉及文件：
+  - src/app/StateDbManager.h
+  - src/app/StateDbManager.cpp
+  - src/CMakeLists.txt
+  - src/app/main.cpp
+  - src/app/MainWindow.cpp
+- 改动概览：
+  - 新增 StateDbManager 单例，负责 state.db 的打开、PRAGMA 设置、schema 初始化（app_meta + documents）、接口封装（recordOpen、updateScroll、loadScroll、listRecent）。
+  - CMake 增加 Qt6::Sql 依赖，编译新文件；main.cpp 设置 Organization/ApplicationName 以使用标准 AppData 路径。
+  - MainWindow 构造时初始化状态库，openMarkdownFile 成功后写入文件 mtime/size 和 last_open_time 到 SQLite。
+- 状态：已完成
