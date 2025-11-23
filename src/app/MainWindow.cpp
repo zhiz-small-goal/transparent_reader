@@ -193,7 +193,7 @@ struct ReaderStyle {
     QColor fontColor         = QColor(QStringLiteral("#f5f5f5"));  // 接近你占位页的默认颜色
     qreal fontOpacity        = 1.0;                        // 字体透明度 0.0 ~ 1.0
     QColor backgroundColor   = QColor(45, 44, 44);         // 深灰色背景
-    qreal  backgroundOpacity = 0.55;                       // 0.0 ~ 1.0
+    qreal  backgroundOpacity = 0.0;                       // 0.0 ~ 1.0
     bool  showScrollbar      = false;                      // 默认隐藏右侧滚动条
 };
 
@@ -989,7 +989,8 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowFlags(Qt::FramelessWindowHint
                    | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
-    setWindowOpacity(0.92);
+    // 保持窗口自身不透明（1.0），背景透明度交给前端样式控制
+    setWindowOpacity(1.0);
 
 
     resize(720, 900);
@@ -1141,7 +1142,7 @@ g_readerStyle.fontPointSize =
 
     g_readerStyle.backgroundOpacity =
         settings.value("reader/backgroundOpacity", g_readerStyle.backgroundOpacity).toDouble();
-    if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.2;
+    if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.0;
     if (g_readerStyle.backgroundOpacity > 1.0) g_readerStyle.backgroundOpacity = 1.0;
 
     m_autoStartEnabled = queryAutoStartEnabled();
@@ -1323,8 +1324,25 @@ void MainWindow::applyReaderStyle()
         QString::number(g_readerStyle.fontPointSize) + QStringLiteral("px");
     const QString fontColorCss =
         colorToCssRgba(g_readerStyle.fontColor, g_readerStyle.fontOpacity);
-    const QString bgCss =
-        colorToCssRgba(g_readerStyle.backgroundColor, g_readerStyle.backgroundOpacity);
+    // 当背景透明度为 0 时，强制使用完全透明色，避免底层残留颜色
+    QString bgCss;
+    if (g_readerStyle.backgroundOpacity <= 0.0001) {
+        bgCss = QStringLiteral("rgba(0,0,0,0)");
+    } else {
+        bgCss = colorToCssRgba(g_readerStyle.backgroundColor, g_readerStyle.backgroundOpacity);
+    }
+    // 边框与阴影：随背景透明度线性衰减，避免低透明时灰色残留
+    QString borderCss;
+    QString shadowCss;
+    if (g_readerStyle.backgroundOpacity <= 0.0001) {
+        borderCss = QStringLiteral("1px solid rgba(0,0,0,0)");
+        shadowCss = QStringLiteral("0 0 0 rgba(0,0,0,0)");
+    } else {
+        const qreal borderAlpha = qBound<qreal>(0.0, 0.18 * g_readerStyle.backgroundOpacity, 1.0);
+        const qreal shadowAlpha = qBound<qreal>(0.0, 0.45 * g_readerStyle.backgroundOpacity, 1.0);
+        borderCss = QStringLiteral("1px solid %1").arg(colorToCssRgba(g_readerStyle.backgroundColor, borderAlpha));
+        shadowCss = QStringLiteral("0 18px 40px rgba(0,0,0,%1)").arg(shadowAlpha, 0, 'f', 3);
+    }
     const QString scrollbarWidthCss =
         g_readerStyle.showScrollbar ? QStringLiteral("8px") : QStringLiteral("0px");
     // 隐藏滚动条但仍允许滚动，使用 auto+宽度0 兼顾滚轮/翻页按钮
@@ -1336,8 +1354,10 @@ void MainWindow::applyReaderStyle()
         "  var fontSize = '%1';"
         "  var fontColor = '%2';"
         "  var bg = '%3';"
-        "  var scrollbarWidth = '%4';"
-        "  var overflowY = '%5';"
+        "  var border = '%4';"
+        "  var shadow = '%5';"
+        "  var scrollbarWidth = '%6';"
+        "  var overflowY = '%7';"
         "  var styleId = 'tmr-reader-style';"
         "  var doc = document;"
         "  var head = doc.head || doc.getElementsByTagName('head')[0];"
@@ -1349,6 +1369,8 @@ void MainWindow::applyReaderStyle()
         // 1) 全局变量
         "  css += ':root{--md-font-size:' + fontSize + ';"
         "                 --md-bg:' + bg + ';"
+        "                 --md-border:' + border + ';"
+        "                 --md-shadow:' + shadow + ';"
         "                 --md-fg:' + fontColor + ';}';"
 
         // 2) 页面根与常见容器：颜色/字号/背景同时兜底
@@ -1357,7 +1379,11 @@ void MainWindow::applyReaderStyle()
         "           color:var(--md-fg);"
         "         }';"
         "  css += 'body, #md-root, .md-root{"
-        "           background: var(--md-bg);"
+        "           background: var(--md-bg) !important;"
+        "         }';"
+        "  css += '#md-root, .md-root{"
+        "           border: var(--md-border) !important;"
+        "           box-shadow: var(--md-shadow) !important;"
         "         }';"
 
                 // 3) 显式控制滚动条（命中 html / body / .md-root 三种容器）
@@ -1381,7 +1407,7 @@ void MainWindow::applyReaderStyle()
 
         "  style.textContent = css;"
         "})();"
-    ).arg(fontSizeCss, fontColorCss, bgCss, scrollbarWidthCss, overflowCss);
+    ).arg(fontSizeCss, fontColorCss, bgCss, borderCss, shadowCss, scrollbarWidthCss, overflowCss);
 
     m_view->page()->runJavaScript(js);
 }

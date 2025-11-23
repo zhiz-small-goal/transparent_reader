@@ -13,6 +13,8 @@
     /* 新增：基础字号变量，默认 14px */
   --md-font-size: 14px;
   --md-scrollbar-width: 0px; /* 默认隐藏滚动条 */
+  --md-border: 1px solid var(--md-border-subtle);
+  --md-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 
 html,
@@ -41,8 +43,8 @@ body.pre-scroll-hidden {
   box-sizing: border-box;
   background-color: var(--md-bg);
   border-radius: 12px;
-  border: 1px solid var(--md-border-subtle);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  border: var(--md-border);
+  box-shadow: var(--md-shadow);
   overflow-y: auto;
 }
 
