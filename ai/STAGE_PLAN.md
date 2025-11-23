@@ -385,4 +385,11 @@
  
  -   o p e n M a r k d o w n F i l e ��^Tnt  m _ o p e n i n g F i l e �p e n d i n g   R/eN�Q�QGPpenc�2n�gT�Qb`Y�n�R�v^:N  p e n d i n g   R/eX[  s c r o l l   r a t i o 0
  -   a p p l y S c r o l l R a t i o ��[�ehV(W  o p e n i n g / r e s t o r e   g��N�Q�n�R0 
- 
+ ### 2025-11-24 会话历史恢复检查
+
+- 复现用户反馈：依次打开 A、B、C，后退到 B 并退出，重启后历史只剩 A、B，无法前进到 C。
+- 定位：启动流程 loadHistoryFromSettings() 先恢复列表与索引（例如 [A,B,C]，index=1），随即 autoOpenLastFileIfNeeded() 默认打开最近文档，调用 openMarkdownFile(..., addToHistory=true) 会截断 m_history = m_history.mid(0, m_historyIndex+1)，导致 C 被丢弃。
+- 建议修复：自动打开最近文件时禁用历史截断（传 addToHistory=false 或复用当前索引而不修改栈），确保上/下一篇链条跨重启完整。
+### 2025-11-24 会话历史恢复修复
+- 启动流程自动打开最近文件时改为 openMarkdownFile(..., addToHistory=false)，避免截断已有的上/下一篇历史栈。
+- 仅调整调用参数，不影响滚动位置存储及其它行为，风险低。

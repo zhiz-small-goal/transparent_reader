@@ -2230,7 +2230,8 @@ void MainWindow::autoOpenLastFileIfNeeded()
         const QString finalPath = fi.canonicalFilePath().isEmpty()
                                       ? fi.absoluteFilePath()
                                       : fi.canonicalFilePath();
-        openMarkdownFile(finalPath);
+        // 启动时自动打开最近文件不应破坏已有历史栈，禁用历史截断
+        openMarkdownFile(finalPath, /*addToHistory=*/false);
         return;
     }
 }
