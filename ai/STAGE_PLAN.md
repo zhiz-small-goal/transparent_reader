@@ -377,4 +377,12 @@
  -   C + +   ŒteÚn¨Rb`YI{…_—zãSÿMQb`Y*gŒ[böe«ˆš[öehV™QŞV  0 0
  -   …Qè  ` . m d `   ş”¥cã‰g9e:NúWNS_MRîvU_„vŒ[teøvù[ï„_ÿİOYuP[îvU_ŒT  ` . . ` 0
  -   /T¨Rê¨RSb _ gÑ‡eöNöeÿ:1Y°‹U_OóÇv^ç~í~\Õ‹Tí~y˜0 
+ # # #   2 0 2 5 - 1 1 - 2 4   †SòS R}NÚn¨Rb`YîOckÿ[½e-N	ÿ
+ 
+ -   „g ıQpeÅNŒ(u N!k  ` l o a d H i s t o r y F r o m S e t t i n g s ` ÿMQÍ‘Y†‰Öv†SòSh0
+ -   ` a p p l y S c r o l l R a t i o `   X RÍ‘Õ‹í•¯sÿbŸRMRİOc  ` m _ r e s t o r i n g S c r o l l ` ÿ2–bkÇ‘7h™QŞV  0 0 
+ # # #   2 0 2 5 - 1 1 - 2 4   Ún¨RN†SòSîOYÿç~í~	ÿ
+ 
+ -   o p e n M a r k d o w n F i l e ÿö^Tnt  m _ o p e n i n g F i l e ÿp e n d i n g   R/eNQ™QGPpencÿ2nÓgTQb`YÚn¨Rÿv^:N  p e n d i n g   R/eX[  s c r o l l   r a t i o 0
+ -   a p p l y S c r o l l R a t i o ÿš[öehV(W  o p e n i n g / r e s t o r e   gô•N™QÚn¨R0 
  

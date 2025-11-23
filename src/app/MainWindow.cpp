@@ -1011,6 +1011,9 @@ MainWindow::MainWindow(QWidget *parent)
         if (m_restoringScroll) {
             return;
         }
+        if (m_openingFile) {
+            return;
+        }
         const QString js = QStringLiteral(
             R"JS(
 (() => {
@@ -1088,8 +1091,8 @@ MainWindow::MainWindow(QWidget *parent)
         m_lastOpenDir = defaultDir;
     }
 
-        // 读取阅读样式（如果没有则用默认值）
-        loadHistoryFromSettings();
+    // 加载历史记录（仅调用一次）
+    loadHistoryFromSettings();
 
 g_readerStyle.fontPointSize =
         settings.value("reader/fontPointSize", g_readerStyle.fontPointSize).toInt();
@@ -1121,8 +1124,6 @@ g_readerStyle.fontPointSize =
     if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.2;
     if (g_readerStyle.backgroundOpacity > 1.0) g_readerStyle.backgroundOpacity = 1.0;
 
-    loadHistoryFromSettings();
-
     m_autoStartEnabled = queryAutoStartEnabled();
     m_loggingEnabled = settings.value("logging/enabled", false).toBool();
     if (m_loggingEnabled && !setFileLoggingEnabled(true)) {
@@ -1137,7 +1138,17 @@ g_readerStyle.fontPointSize =
         connect(m_view, &QWebEngineView::loadFinished,
                 this, [this](bool ok) {
                     m_pageLoaded = ok;
-                    if (ok && !m_pendingMarkdown.isEmpty()) {
+                    if (!ok) {
+                        // 本次加载失败，结束“正在打开文件”状态
+                        m_openingFile = false;
+                        return;
+                    }
+
+                    // 重新把阅读样式同步给前端
+                    applyReaderStyle();
+
+                    // ??? pending ????????
+                    if (!m_pendingMarkdown.isEmpty()) {
                         const QUrl baseUrl(m_pendingBaseUrl);
                         renderMarkdownInPage(m_pendingMarkdown,
                                              m_pendingTitle,
@@ -1146,13 +1157,24 @@ g_readerStyle.fontPointSize =
                         m_pendingTitle.clear();
                         m_pendingBaseUrl.clear();
                     }
-                    if (ok) {
-                        applyReaderStyle();
-                        if (!m_currentFilePath.isEmpty()) {
-                            m_lastScrollRatio = StateDbManager::instance().loadScroll(m_currentFilePath);
+
+                    if (!m_currentFilePath.isEmpty()) {
+                        double ratio = 0.0;
+                        if (m_pendingScrollRatio > 0.001) {
+                            ratio = m_pendingScrollRatio;
+                        } else {
+                            ratio = StateDbManager::instance().loadScroll(m_currentFilePath);
+                        }
+
+                        m_pendingScrollRatio = 0.0;
+                        m_lastScrollRatio    = ratio;
+                        if (m_lastScrollRatio > 0.001) {
                             applyScrollRatio(m_lastScrollRatio);
                         }
                     }
+
+                    // ????????????????
+                    m_openingFile = false;
                 });
     } else {
         m_useEmbeddedViewer = false;
@@ -1974,88 +1996,100 @@ bool MainWindow::openMarkdownFile(const QString &path, bool addToHistory)
 {
     if (!m_view) return false;
 
+    m_openingFile = true;
+
     QFileInfo fi(path);
     if (!fi.exists() || !fi.isFile()) {
         QMessageBox::warning(
             this,
             QStringLiteral("打开失败"),
             QStringLiteral("找不到文件：\n%1").arg(path));
+        m_openingFile = false;
         return false;
     }
 
-    // 记录路径
-    m_lastOpenDir     = fi.absolutePath();
-    m_currentFilePath = fi.absoluteFilePath();
+    // 统一规范成绝对路径
+    const QString absPath = fi.absoluteFilePath();
+    m_currentFilePath = absPath;
 
-    // 写入设置
-    {
-        QSettings settings("zhiz", "TransparentMdReader");
-        settings.setValue("ui/lastOpenDir", m_lastOpenDir);
-        settings.setValue("ui/lastFilePath", m_currentFilePath);
+    // 记住“上次打开目录”，用于下次文件对话框默认目录
+    m_lastOpenDir = fi.absolutePath();
+    if (!m_lastOpenDir.isEmpty()) {
+        QSettings settings(QStringLiteral("zhiz"), QStringLiteral("TransparentMdReader"));
+        settings.setValue(QStringLiteral("ui/lastOpenDir"), m_lastOpenDir);
+        settings.setValue(QStringLiteral("ui/lastFilePath"), m_currentFilePath);
     }
 
-    // 读取 Markdown 文本
-    QFile file(path);
+    QFile file(absPath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::warning(
             this,
             QStringLiteral("打开失败"),
-            QStringLiteral("无法打开文件：\n%1").arg(path));
+            QStringLiteral("无法读取文件：\n%1").arg(absPath));
+        m_openingFile = false;
         return false;
     }
 
     QTextStream in(&file);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    // Qt5 写法
     in.setCodec("UTF-8");
 #else
+    // Qt6 写法
     in.setEncoding(QStringConverter::Utf8);
 #endif
-    QString markdown = in.readAll();
-    file.close();
+const QString markdown = in.readAll();
 
-    const qint64 fileMtime = fi.lastModified().toSecsSinceEpoch();
-    const qint64 fileSize  = fi.size();
 
+    // 更新历史栈（只在 addToHistory = true 时修改栈）
     if (addToHistory) {
-        while (m_history.size() > m_historyIndex + 1) {
-            m_history.removeLast();
+        if (m_historyIndex >= 0 && m_historyIndex < m_history.size()) {
+            m_history = m_history.mid(0, m_historyIndex + 1);
         }
-        if (m_history.isEmpty() || m_history.last() != m_currentFilePath) {
-            m_history.append(m_currentFilePath);
+
+        if (m_history.isEmpty() || m_history.last() != absPath) {
+            m_history.append(absPath);
         }
         m_historyIndex = m_history.size() - 1;
-        trimHistory();
-        updateNavigationActions();
         persistHistory();
     }
 
-    // 准备传给前端的 baseUrl
-    QUrl baseUrl = QUrl::fromLocalFile(fi.absolutePath() + "/");
+    const QUrl baseUrl = QUrl::fromLocalFile(fi.absolutePath() + QLatin1Char('/'));
 
-    // 加载前端 index.html（如果尚未加载）
+    // 第一次加载：index.html 还没就绪，先挂起 Markdown 和滚动比例
     if (!m_pageLoaded) {
         const QUrl index = locateIndexPage();
 
-        m_pendingMarkdown = markdown;
-        m_pendingTitle    = fi.fileName();
-        m_pendingBaseUrl  = baseUrl.toString();
+        m_pendingMarkdown     = markdown;
+        m_pendingTitle        = fi.fileName();
+        m_pendingBaseUrl      = baseUrl.toString();
+        m_pendingScrollRatio  = StateDbManager::instance().loadScroll(m_currentFilePath);
 
         m_view->setUrl(index);
+        // m_openingFile 在 loadFinished 回调里统一置回 false
         return true;
     }
 
-        // 前端已就绪：直接渲染
+        // ???????? Markdown???????
     renderMarkdownInPage(markdown, fi.fileName(), baseUrl);
     setWindowTitle(QStringLiteral("TransparentMdReader - %1").arg(fi.fileName()));
 
-    // 渲染完再套用一次当前阅读样式
+    // ????????
     applyReaderStyle();
+
     m_lastScrollRatio = StateDbManager::instance().loadScroll(m_currentFilePath);
-    applyScrollRatio(m_lastScrollRatio);
-    StateDbManager::instance().recordOpen(m_currentFilePath, fi.lastModified().toSecsSinceEpoch(), fi.size());
+    if (m_lastScrollRatio > 0.001) {
+        applyScrollRatio(m_lastScrollRatio);
+    }
+
+    StateDbManager::instance().recordOpen(
+        m_currentFilePath,
+        fi.lastModified().toSecsSinceEpoch(),
+        fi.size());
+
+    m_openingFile = false;
     return true;
 }
-
 
 void MainWindow::persistHistory()
 {
@@ -2069,23 +2103,52 @@ void MainWindow::loadHistoryFromSettings()
 {
     QSettings settings("zhiz", "TransparentMdReader");
     m_historyLimit = settings.value("history/limit", 20).toInt();
-    if (m_historyLimit < 1) m_historyLimit = 20;
-    if (m_historyLimit > 200) m_historyLimit = 200;
+    if (m_historyLimit < 1)
+        m_historyLimit = 20;
+    if (m_historyLimit > 200)
+        m_historyLimit = 200;
 
     const QStringList list = settings.value("history/list").toStringList();
     int index = settings.value("history/index", -1).toInt();
     m_history = list;
     trimHistory();
+
     if (m_history.isEmpty()) {
-        m_historyIndex = -1;
-    } else {
-        if (index < 0 || index >= m_history.size()) {
-            index = m_history.size() - 1;
+        // 旧版本没有 history/list 的情况：从 SQLite 的最近列表补一份
+        const auto recents = StateDbManager::instance().listRecent(m_historyLimit);
+        for (const auto &entry : recents) {
+            QFileInfo fi(entry.path);
+            if (!fi.exists() || !fi.isFile())
+                continue;
+
+            const QString finalPath = fi.canonicalFilePath().isEmpty()
+                                          ? fi.absoluteFilePath()
+                                          : fi.canonicalFilePath();
+            m_history.append(finalPath);
         }
-        m_historyIndex = index;
+        trimHistory();
+
+        if (!m_history.isEmpty()) {
+            // 默认指向最新一条
+            m_historyIndex = m_history.size() - 1;
+            // 同步回 QSettings，后面就直接用 QSettings 的历史
+            persistHistory();
+        } else {
+            m_historyIndex = -1;
+        }
+
+        updateNavigationActions();
+        return;
     }
+
+    // history/list 非空的情况，按原来的逻辑走
+    if (index < 0 || index >= m_history.size()) {
+        index = m_history.size() - 1;
+    }
+    m_historyIndex = index;
     updateNavigationActions();
 }
+
 
 void MainWindow::trimHistory()
 {
@@ -2105,24 +2168,49 @@ void MainWindow::trimHistory()
 
 void MainWindow::applyScrollRatio(double ratio)
 {
-    if (!m_view || !m_view->page() || ratio < 0.0) {
+    if (!m_view || !m_view->page() || ratio <= 0.0) {
         return;
     }
+
     double clamped = ratio;
-    if (clamped > 1.0) clamped = 1.0;
+    if (clamped > 1.0) {
+        clamped = 1.0;
+    }
 
     const QString js = QStringLiteral(
-        "typeof setInitialScroll === 'function' ? setInitialScroll(%1) : false").arg(clamped, 0, 'f', 6);
-    m_restoringScroll = true;
-    m_view->page()->runJavaScript(js, [this](const QVariant &v) {
-        const bool appliedImmediately = v.toBool();
-        const int waitMs = appliedImmediately ? 120 : 1500;
-        QTimer::singleShot(waitMs, this, [this]() {
-            m_restoringScroll = false;
-        });
-    });
-}
+        "(function(r) { "
+        "  if (typeof setInitialScroll === 'function') { "
+        "    return setInitialScroll(r); "
+        "  } "
+        "  return false; "
+        "})(%1);"
+    ).arg(clamped, 0, 'f', 6);
 
+    // ????? m_restoringScroll ? true???????? 0 ??
+    const int kMaxAttempts = 5;
+    const int kRetryDelayMs = 200;
+
+    std::function<void(int)> applyOnce;
+    applyOnce = [this, js, kMaxAttempts, kRetryDelayMs, &applyOnce](int attempt) {
+        if (!m_view || !m_view->page()) {
+            m_restoringScroll = false;
+            return;
+        }
+        m_view->page()->runJavaScript(js, [this, attempt, kMaxAttempts, kRetryDelayMs, &applyOnce](const QVariant &v) {
+            const bool handled = v.toBool();
+            if (handled || attempt >= kMaxAttempts) {
+                QTimer::singleShot(80, this, [this]() { m_restoringScroll = false; });
+            } else {
+                QTimer::singleShot(kRetryDelayMs, this, [this, attempt, &applyOnce]() {
+                    applyOnce(attempt + 1);
+                });
+            }
+        });
+    };
+
+    m_restoringScroll = true;
+    applyOnce(0);
+}
 
 void MainWindow::autoOpenLastFileIfNeeded()
 {

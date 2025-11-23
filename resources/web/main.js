@@ -264,53 +264,61 @@
     return applied;
   }
 
-  function scheduleApplyInitialScroll() {
-    if (!gPageReadyForScroll) return;
+    function scheduleApplyInitialScroll() {
+      if (!gPageReadyForScroll) return;
 
-    if (gScrollRetryHandle) {
-      clearTimeout(gScrollRetryHandle);
-      gScrollRetryHandle = null;
-    }
-
-    function step() {
-      const ok = tryApplyInitialScroll();
-      if (ok) {
-        gPendingScrollRatio = null;
-        gScrollRetryCount = 0;
-        return true;
+      if (gScrollRetryHandle) {
+        clearTimeout(gScrollRetryHandle);
+        gScrollRetryHandle = null;
       }
-      gScrollRetryCount += 1;
-      if (gScrollRetryCount > 8) {
-        return false;
-      }
-      gScrollRetryHandle = setTimeout(() => {
-        requestAnimationFrame(step);
-      }, 80);
-      return null;
-    }
 
-    requestAnimationFrame(step);
+      function step() {
+        const ok = tryApplyInitialScroll();
+        const contentEl = document.getElementById("md-content");
+
+        if (ok) {
+          gPendingScrollRatio = null;
+          gScrollRetryCount = 0;
+          gScrollRetryHandle = null;
+          if (contentEl) contentEl.hidden = false;
+          return true;
+        }
+
+        gScrollRetryCount += 1;
+        if (gScrollRetryCount > 8) {
+          // 放弃重试，也要把内容显示出来，避免白屏
+          gPendingScrollRatio = null;
+          gScrollRetryHandle = null;
+          if (contentEl) contentEl.hidden = false;
+          return false;
+        }
+
+        gScrollRetryHandle = setTimeout(() => {
+          requestAnimationFrame(step);
+        }, 80);
+        return null;
+      }
+
+      requestAnimationFrame(step);
+  
+
   }
 
+   // 只记录目标比例，不在这里直接滚动
   window.setInitialScroll = function (ratio) {
-    gPendingScrollRatio = ratio;
-    gScrollRetryCount = 0;
-
-    // 若页面已就绪，先尝试一次立即应用
-    let appliedNow = false;
-    if (gPageReadyForScroll) {
-      appliedNow = tryApplyInitialScroll();
-      if (appliedNow) {
-        gPendingScrollRatio = null;
-        gScrollRetryCount = 0;
-      }
+    var r = Number(ratio);
+    if (!isFinite(r)) {
+      return false;
     }
-
-    if (!appliedNow) {
+    r = Math.max(0, Math.min(1, r));
+    gPendingScrollRatio = r;
+    gScrollRetryCount = 0;
+    if (gPageReadyForScroll) {
       scheduleApplyInitialScroll();
     }
-    return appliedNow;
+    return true;
   };
+
 
   // ===============================
   // C++ 调用的入口
@@ -321,20 +329,30 @@
 
     gMarkdownBaseUrl = baseUrl || "";
 
-    // 去掉 YAML
+    // ?? YAML
     markdown = stripFrontMatter(markdown);
 
-    // 智能段落修复（不会破坏链接）
+    // ??????????????
     markdown = smartNormalizeParagraphs(markdown);
 
-    // 渲染
+    // ??
     const html = renderMarkdownToHtml(markdown);
     contentEl.innerHTML = html;
 
-    document.title = title;
+    document.title = title || "";
     const loading = document.querySelector(".md-loading");
     if (loading) loading.hidden = true;
-    contentEl.hidden = false;
+
+    // ????????????????????????/?????????????
+    if (gPendingScrollRatio !== null) {
+      contentEl.hidden = true;
+      if (gPageReadyForScroll) {
+        scheduleApplyInitialScroll();
+      }
+    } else {
+      contentEl.hidden = false;
+    }
   };
+
 
 })();

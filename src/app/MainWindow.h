@@ -123,6 +123,8 @@ private:
     QTimer *m_scrollTimer       = nullptr;
     double  m_lastScrollRatio   = 0.0;
     bool    m_restoringScroll   = false;
+    bool    m_openingFile       = false;
+    double  m_pendingScrollRatio = 0.0;
     int     m_historyLimit      = 20;
 
         // ===== 整窗拖动状态（未锁定时用） =====  // NEW
