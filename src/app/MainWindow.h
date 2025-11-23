@@ -90,6 +90,7 @@ private:
     void updateNavigationActions();
     void updateClickThroughState();
     void createSystemTray();
+    void rebuildRecentMenu();
     void updateTrayChecks();
     void applyScrollRatio(double ratio);
     void autoOpenLastFileIfNeeded();
@@ -103,10 +104,12 @@ private:
     TitleBar       *m_titleBar     = nullptr;
     QSystemTrayIcon *m_trayIcon    = nullptr;
     QMenu           *m_trayMenu    = nullptr;
+    QMenu           *m_recentMenu  = nullptr;
     QAction         *m_trayOpenAction      = nullptr;
     QAction         *m_trayAutoStartAction = nullptr;
     QAction         *m_trayLoggingAction   = nullptr;
     QAction         *m_trayQuitAction      = nullptr;
+    QAction         *m_trayClearRecentAction = nullptr;
 
     QString     m_lastOpenDir;
     QString     m_currentFilePath;
@@ -126,6 +129,7 @@ private:
     bool    m_openingFile       = false;
     double  m_pendingScrollRatio = 0.0;
     int     m_historyLimit      = 20;
+    int     m_recentLimit       = 20;
 
         // ===== 整窗拖动状态（未锁定时用） =====  // NEW
     bool   m_dragging      = false;

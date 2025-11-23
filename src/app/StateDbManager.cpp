@@ -218,6 +218,18 @@ bool StateDbManager::markMissing(const QString &path)
     return runPrepared(query);
 }
 
+bool StateDbManager::clearRecent()
+{
+    if (!open()) {
+        return false;
+    }
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("state"));
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "UPDATE documents SET last_open_time=0;"));
+    return runPrepared(query);
+}
+
 double StateDbManager::loadScroll(const QString &path) const
 {
     if (!m_ready && !const_cast<StateDbManager *>(this)->open()) {

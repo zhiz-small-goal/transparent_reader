@@ -23,6 +23,9 @@ public:
     // 记录一次“打开文件”：更新 last_open_time / 文件大小 / mtime，如不存在则插入
     bool recordOpen(const QString &path, qint64 fileMtime, qint64 fileSize);
 
+    // 清空最近打开排序字段（仅置 0 last_open_time，不影响滚动等其他字段）
+    bool clearRecent();
+
     // 将缺失文件的 last_open_time 归零，避免下次自动打开
     bool markMissing(const QString &path);
 

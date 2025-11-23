@@ -356,10 +356,12 @@ class ReaderSettingsDialog : public QDialog
 public:
     explicit ReaderSettingsDialog(const ReaderStyle &initialStyle,
                                   int historyLimit,
+                                  int recentLimit,
                                   QWidget *parent = nullptr)
         : QDialog(parent)
         , m_style(initialStyle)
         , m_historyLimit(historyLimit)
+        , m_recentLimit(recentLimit)
     {
         setWindowTitle(QStringLiteral("阅读设置"));
         // 小工具窗 + 置顶，方便一边调一边看效果
@@ -570,6 +572,17 @@ public:
                 });
         form->addRow(QStringLiteral("历史记录上限"), m_historyLimitSpin);
 
+        // 最近打开上限
+        m_recentLimitSpin = new QSpinBox(this);
+        m_recentLimitSpin->setRange(1, 200);
+        m_recentLimitSpin->setValue(m_recentLimit);
+        connect(m_recentLimitSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+                this, [this](int v) {
+                    m_recentLimit = v;
+                    emit recentLimitChanged(v);
+                });
+        form->addRow(QStringLiteral("最近打开上限"), m_recentLimitSpin);
+
 
         // 底部一个“关闭”按钮
         auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
@@ -590,6 +603,7 @@ signals:
     // 每次用户改动任一控件都会发出一次
     void styleChanged(const ReaderStyle &style);
     void historyLimitChanged(int limit);
+    void recentLimitChanged(int limit);
 
 private:
     static void updateColorButton(QPushButton *btn, const QColor &color)
@@ -611,7 +625,9 @@ private:
     QPushButton *m_backgroundColorButton = nullptr;
     QCheckBox   *m_scrollbarCheck        = nullptr;
     QSpinBox    *m_historyLimitSpin      = nullptr;
+    QSpinBox    *m_recentLimitSpin       = nullptr;
     int          m_historyLimit          = 20;
+    int          m_recentLimit           = 20;
 };
 
 class MainWindow;   // 前向声明
@@ -1094,6 +1110,10 @@ MainWindow::MainWindow(QWidget *parent)
     // 加载历史记录（仅调用一次）
     loadHistoryFromSettings();
 
+    m_recentLimit = settings.value("recent/limit", 20).toInt();
+    if (m_recentLimit < 1)  m_recentLimit = 20;
+    if (m_recentLimit > 200) m_recentLimit = 200;
+
 g_readerStyle.fontPointSize =
         settings.value("reader/fontPointSize", g_readerStyle.fontPointSize).toInt();
 
@@ -1254,7 +1274,7 @@ MainWindow::~MainWindow()
 void MainWindow::openSettingsDialog()
 {
     // 每次点击 Settings 新建一个对话框，关闭后自动 delete
-    auto *dlg = new ReaderSettingsDialog(g_readerStyle, m_historyLimit, this);
+    auto *dlg = new ReaderSettingsDialog(g_readerStyle, m_historyLimit, m_recentLimit, this);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
 
     // 实时更新：任何控件变化都会发出 styleChanged
@@ -1281,6 +1301,13 @@ void MainWindow::openSettingsDialog()
                 m_historyLimit = qBound(1, limit, 200);
                 trimHistory();
                 persistHistory();
+            });
+    connect(dlg, &ReaderSettingsDialog::recentLimitChanged,
+            this, [this](int limit) {
+                m_recentLimit = qBound(1, limit, 200);
+                QSettings settings("zhiz", "TransparentMdReader");
+                settings.setValue("recent/limit", m_recentLimit);
+                rebuildRecentMenu();
             });
 
     dlg->show();
@@ -1520,6 +1547,9 @@ void MainWindow::createSystemTray()
     connect(m_trayOpenAction, &QAction::triggered,
             this, &MainWindow::openMarkdownFileFromDialog);
 
+    m_recentMenu = m_trayMenu->addMenu(QStringLiteral("最近打开"));
+    rebuildRecentMenu();
+
     m_trayAutoStartAction = m_trayMenu->addAction(QStringLiteral("开机自启"));
     m_trayAutoStartAction->setCheckable(true);
     connect(m_trayAutoStartAction, &QAction::toggled,
@@ -1541,6 +1571,56 @@ void MainWindow::createSystemTray()
 
     updateTrayChecks();
     m_trayIcon->show();
+}
+
+void MainWindow::rebuildRecentMenu()
+{
+    if (!m_recentMenu) {
+        return;
+    }
+
+    m_recentMenu->clear();
+
+    const auto recents = StateDbManager::instance().listRecent(m_recentLimit);
+    int added = 0;
+    for (const auto &entry : recents) {
+        QFileInfo fi(entry.path);
+        if (!fi.exists() || !fi.isFile()) {
+            StateDbManager::instance().markMissing(entry.path);
+            continue;
+        }
+        const QString finalPath = fi.canonicalFilePath().isEmpty()
+                                      ? fi.absoluteFilePath()
+                                      : fi.canonicalFilePath();
+        QString text = fi.fileName();
+        if (text.isEmpty()) {
+            text = finalPath;
+        }
+
+        QAction *act = m_recentMenu->addAction(text);
+        act->setToolTip(finalPath);
+        connect(act, &QAction::triggered, this, [this, finalPath]() {
+            openMarkdownFile(finalPath);
+        });
+        ++added;
+    }
+
+    if (added == 0) {
+        QAction *placeholder = m_recentMenu->addAction(QStringLiteral("(无最近文件)"));
+        placeholder->setEnabled(false);
+    }
+
+    if (!m_trayClearRecentAction) {
+        m_trayClearRecentAction = new QAction(QStringLiteral("清空最近列表"), this);
+        connect(m_trayClearRecentAction, &QAction::triggered, this, [this]() {
+            // 仅清除 last_open_time，不触碰滚动等其他字段
+            StateDbManager::instance().clearRecent();
+            rebuildRecentMenu();
+        });
+    }
+
+    m_recentMenu->addSeparator();
+    m_recentMenu->addAction(m_trayClearRecentAction);
 }
 
 void MainWindow::updateTrayChecks()
@@ -2086,6 +2166,7 @@ const QString markdown = in.readAll();
         m_currentFilePath,
         fi.lastModified().toSecsSinceEpoch(),
         fi.size());
+    rebuildRecentMenu();
 
     m_openingFile = false;
     return true;
