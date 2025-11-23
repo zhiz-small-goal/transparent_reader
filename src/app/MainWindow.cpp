@@ -1524,6 +1524,38 @@ void MainWindow::dropEvent(QDropEvent *event)
     QMainWindow::dropEvent(event);
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // 当系统托盘可用时，默认“关闭”仅隐藏窗口，保持托盘常驻
+    if (!m_exiting && QSystemTrayIcon::isSystemTrayAvailable()) {
+        event->ignore();
+        hide();
+        return;
+    }
+
+    QMainWindow::closeEvent(event);
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    if (m_titleBar) {
+        m_titleBar->syncWithMainWindow();
+        m_titleBar->syncFromWindowLockState(m_locked);
+        m_titleBar->applyReaderUiStyle(g_readerStyle);
+        m_titleBar->show();
+        m_titleBar->raise();
+    }
+}
+
+void MainWindow::hideEvent(QHideEvent *event)
+{
+    QMainWindow::hideEvent(event);
+    if (m_titleBar) {
+        m_titleBar->hide();
+    }
+}
+
 void MainWindow::createSystemTray()
 {
     if (m_trayIcon) {
@@ -1643,11 +1675,14 @@ void MainWindow::handleTrayActivated(QSystemTrayIcon::ActivationReason reason)
 
     if (reason == QSystemTrayIcon::Trigger
         || reason == QSystemTrayIcon::DoubleClick) {
-        if (isHidden()) {
+        if (isHidden() || isMinimized()) {
             show();
+            showNormal();
+            raise();
+            activateWindow();
+        } else {
+            hide();
         }
-        raise();
-        activateWindow();
     }
 }
 
@@ -1684,6 +1719,7 @@ void MainWindow::toggleLogging(bool enabled)
 
 void MainWindow::quitFromTray()
 {
+    m_exiting = true;
     QApplication::quit();
 }
 

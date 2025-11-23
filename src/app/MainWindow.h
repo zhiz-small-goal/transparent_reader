@@ -61,6 +61,9 @@ bool eventFilter(QObject *obj, QEvent *event) override; // NEW
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
     // Windows 下用于实现“内容区域点击穿透”的 native 事件处理
     bool nativeEvent(const QByteArray &eventType,
@@ -130,6 +133,7 @@ private:
     double  m_pendingScrollRatio = 0.0;
     int     m_historyLimit      = 20;
     int     m_recentLimit       = 20;
+    bool    m_exiting           = false;
 
         // ===== 整窗拖动状态（未锁定时用） =====  // NEW
     bool   m_dragging      = false;
