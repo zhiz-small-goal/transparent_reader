@@ -1145,6 +1145,11 @@ g_readerStyle.fontPointSize =
     if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.0;
     if (g_readerStyle.backgroundOpacity > 1.0) g_readerStyle.backgroundOpacity = 1.0;
 
+    g_readerStyle.showScrollbar =
+        settings.value("reader/showScrollbar", g_readerStyle.showScrollbar).toBool();
+
+    m_manualLocked = settings.value("reader/manualLocked", true).toBool();
+
     m_autoStartEnabled = queryAutoStartEnabled();
     m_loggingEnabled = settings.value("logging/enabled", false).toBool();
     if (m_loggingEnabled && !setFileLoggingEnabled(true)) {
@@ -1221,9 +1226,8 @@ g_readerStyle.fontPointSize =
 //     }
 // #endif
 
-        // NEW: 启动时默认处于锁定 / 内容穿透模式
-    m_manualLocked = true;   // 用户默认偏好：平时保持锁定
-    setLocked(true);
+        // NEW: 启动时按照用户偏好锁定 / 内容穿透
+    setLocked(m_manualLocked);
 
 #ifdef Q_OS_WIN
     // 每 30ms 轮询一次 Ctrl 键状态：
@@ -1418,6 +1422,8 @@ void MainWindow::toggleLockByUser()
     // 用户点击标题栏上的 🔒 按钮时调用：
     // 切换“基础锁定偏好”，Ctrl 仍然可以临时解锁
     m_manualLocked = !m_manualLocked;
+    QSettings settings("zhiz", "TransparentMdReader");
+    settings.setValue("reader/manualLocked", m_manualLocked);
 
 #ifdef Q_OS_WIN
     // 立即按当前 Ctrl 状态 + 用户偏好应用一次，避免感觉迟钝
