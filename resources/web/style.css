@@ -177,7 +177,7 @@ body.pre-scroll-hidden {
 
 .md-content pre code {
   font-family: var(--md-mono);
-  font-size: 12px;
+  font-size: calc(var(--md_font-size) * 0.9);
 }
 
 /* 表格（简单支持） */
