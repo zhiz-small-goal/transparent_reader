@@ -571,34 +571,56 @@ public:
 
         // ===== 窗口大小（宽 / 高，像素） =====
         m_windowWidthSpin = new QSpinBox(this);
-        m_windowWidthSpin->setRange(480, 3840);
-        m_windowWidthSpin->setValue(qBound(480, m_windowWidth, 3840));
+        m_windowWidthSpin->setRange(kMinWindowWidth, kMaxWindowWidth);
+        m_windowWidthSpin->setSingleStep(20);
+        m_windowWidthSpin->setSuffix(QStringLiteral(" px"));
+        m_windowWidthSpin->setToolTip(
+            QStringLiteral("有效范围：%1 - %2 px")
+                .arg(kMinWindowWidth)
+                .arg(kMaxWindowWidth));
+        m_windowWidthSpin->setValue(qBound(kMinWindowWidth, m_windowWidth, kMaxWindowWidth));
         connect(m_windowWidthSpin,
                 QOverload<int>::of(&QSpinBox::valueChanged),
                 this,
                 [this](int v) {
-                    v = qBound(480, v, 3840);
-                    if (m_windowWidth != v) {
-                        m_windowWidth = v;
-                        emit windowSizeChanged(m_windowWidth, m_windowHeight);
+                    const int bounded = qBound(kMinWindowWidth, v, kMaxWindowWidth);
+                    if (bounded != m_windowWidthSpin->value()) {
+                        QSignalBlocker guard(m_windowWidthSpin);
+                        m_windowWidthSpin->setValue(bounded);
                     }
+                    m_windowWidth = bounded;
+                    emit windowSizeChanged(m_windowWidth, m_windowHeight);
+                    updateWindowSizeHint();
                 });
         form->addRow(QStringLiteral("窗口宽度"), m_windowWidthSpin);
 
         m_windowHeightSpin = new QSpinBox(this);
-        m_windowHeightSpin->setRange(600, 2160);
-        m_windowHeightSpin->setValue(qBound(600, m_windowHeight, 2160));
+        m_windowHeightSpin->setRange(kMinWindowHeight, kMaxWindowHeight);
+        m_windowHeightSpin->setSingleStep(20);
+        m_windowHeightSpin->setSuffix(QStringLiteral(" px"));
+        m_windowHeightSpin->setToolTip(
+            QStringLiteral("有效范围：%1 - %2 px")
+                .arg(kMinWindowHeight)
+                .arg(kMaxWindowHeight));
+        m_windowHeightSpin->setValue(qBound(kMinWindowHeight, m_windowHeight, kMaxWindowHeight));
         connect(m_windowHeightSpin,
                 QOverload<int>::of(&QSpinBox::valueChanged),
                 this,
                 [this](int v) {
-                    v = qBound(600, v, 2160);
-                    if (m_windowHeight != v) {
-                        m_windowHeight = v;
-                        emit windowSizeChanged(m_windowWidth, m_windowHeight);
+                    const int bounded = qBound(kMinWindowHeight, v, kMaxWindowHeight);
+                    if (bounded != m_windowHeightSpin->value()) {
+                        QSignalBlocker guard(m_windowHeightSpin);
+                        m_windowHeightSpin->setValue(bounded);
                     }
+                    m_windowHeight = bounded;
+                    emit windowSizeChanged(m_windowWidth, m_windowHeight);
+                    updateWindowSizeHint();
                 });
         form->addRow(QStringLiteral("窗口高度"), m_windowHeightSpin);
+
+        m_windowSizeHintLabel = new QLabel(this);
+        updateWindowSizeHint();
+        form->addRow(QString(), m_windowSizeHintLabel);
 
         // 历史记录上限
         m_historyLimitSpin = new QSpinBox(this);
@@ -656,6 +678,32 @@ private:
         btn->setFixedWidth(60);
     }
 
+    void updateWindowSizeHint()
+    {
+        if (!m_windowSizeHintLabel) return;
+
+        const bool widthAtLimit =
+            m_windowWidthSpin
+            && (m_windowWidthSpin->value() == kMinWindowWidth
+                || m_windowWidthSpin->value() == kMaxWindowWidth);
+        const bool heightAtLimit =
+            m_windowHeightSpin
+            && (m_windowHeightSpin->value() == kMinWindowHeight
+                || m_windowHeightSpin->value() == kMaxWindowHeight);
+
+        QString hint = QStringLiteral("有效范围：宽 %1 - %2 px，高 %3 - %4 px。")
+                           .arg(kMinWindowWidth)
+                           .arg(kMaxWindowWidth)
+                           .arg(kMinWindowHeight)
+                           .arg(kMaxWindowHeight);
+        if (widthAtLimit || heightAtLimit) {
+            hint += QStringLiteral(" 已自动套用最近的边界值。");
+        } else {
+            hint += QStringLiteral(" 超出范围会自动套用最近的边界值。");
+        }
+        m_windowSizeHintLabel->setText(hint);
+    }
+
     ReaderStyle  m_style;
     QSpinBox    *m_fontSizeSpin          = nullptr;
     QSlider     *m_fontOpacitySlider     = nullptr;   // 字体透明度
@@ -665,6 +713,7 @@ private:
     QCheckBox   *m_scrollbarCheck        = nullptr;
     QSpinBox    *m_windowWidthSpin       = nullptr;
     QSpinBox    *m_windowHeightSpin      = nullptr;
+    QLabel      *m_windowSizeHintLabel   = nullptr;
     QSpinBox    *m_historyLimitSpin      = nullptr;
     QSpinBox    *m_recentLimitSpin       = nullptr;
     int          m_historyLimit          = 20;
@@ -1041,11 +1090,11 @@ MainWindow::MainWindow(QWidget *parent)
     const int storedW = settings.value("window/width", 720).toInt();
     const int storedH = settings.value("window/height", 900).toInt();
 
-    const int w = qBound(480, storedW, 3840);
-    const int h = qBound(600, storedH, 2160);
+    const int w = qBound(kMinWindowWidth, storedW, kMaxWindowWidth);
+    const int h = qBound(kMinWindowHeight, storedH, kMaxWindowHeight);
 
     resize(w, h);
-    setMinimumSize(480, 600);
+    setMinimumSize(kMinWindowWidth, kMinWindowHeight);
 
 
     // 中央容器：只放 WebEngine 区域
@@ -1377,13 +1426,8 @@ void MainWindow::openSettingsDialog()
     // 新增：窗口大小改变时，立即调整窗口并写入 QSettings
     connect(dlg, &ReaderSettingsDialog::windowSizeChanged,
             this, [this](int w, int h) {
-                const int minW = 480;
-                const int minH = 600;
-                const int maxW = 3840;
-                const int maxH = 2160;
-
-                const int cw = qBound(minW, w, maxW);
-                const int ch = qBound(minH, h, maxH);
+                const int cw = qBound(kMinWindowWidth,  w, kMaxWindowWidth);
+                const int ch = qBound(kMinWindowHeight, h, kMaxWindowHeight);
 
                 resize(cw, ch);
 
