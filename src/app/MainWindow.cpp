@@ -83,6 +83,12 @@ static void setWindowClickThrough(QWidget *w, bool enabled)
 namespace
 {
 
+    // 窗口尺寸的统一下限/上限（像素）
+constexpr int kMinWindowWidth  = 480;
+constexpr int kMinWindowHeight = 600;
+constexpr int kMaxWindowWidth  = 3840;
+constexpr int kMaxWindowHeight = 2160;
+
 QUrl locateIndexPage()
 {
     QDir dir(QCoreApplication::applicationDirPath());
@@ -357,11 +363,15 @@ public:
     explicit ReaderSettingsDialog(const ReaderStyle &initialStyle,
                                   int historyLimit,
                                   int recentLimit,
+                                  int windowWidth,
+                                  int windowHeight,
                                   QWidget *parent = nullptr)
         : QDialog(parent)
         , m_style(initialStyle)
         , m_historyLimit(historyLimit)
         , m_recentLimit(recentLimit)
+        , m_windowWidth(windowWidth)
+        , m_windowHeight(windowHeight)
     {
         setWindowTitle(QStringLiteral("阅读设置"));
         // 小工具窗 + 置顶，方便一边调一边看效果
@@ -474,8 +484,7 @@ public:
                                 emit styleChanged(m_style);
                             });
 
-                    // 点 OK：保持当前颜色（currentColorChanged
-                    // 已经发过最终一次 styleChanged 了）
+                    // 点 OK：保持当前颜色
                     connect(dlg, &QColorDialog::accepted,
                             this, [this, dlg]() {
                                 const QColor c = dlg->selectedColor();
@@ -538,7 +547,6 @@ public:
         auto *fontOpacityRow = new QHBoxLayout;
         fontOpacityRow->setContentsMargins(0, 0, 0, 0);
         fontOpacityRow->addWidget(m_fontOpacitySlider, 1);
-        // 注意：这里用的是上面构造函数里创建的 fontOpacityLabel 变量
         fontOpacityRow->addWidget(fontOpacityLabel);
         form->addRow(QStringLiteral("字体透明度"), fontOpacityRow);
 
@@ -551,7 +559,7 @@ public:
         opacityRow->addWidget(opacityLabel);
         form->addRow(QStringLiteral("背景透明度"), opacityRow);
 
-                // 是否显示右侧滚动条
+        // 是否显示右侧滚动条
         m_scrollbarCheck = new QCheckBox(QStringLiteral("显示右侧滚动条"), this);
         m_scrollbarCheck->setChecked(m_style.showScrollbar);
         connect(m_scrollbarCheck, &QCheckBox::toggled,
@@ -560,6 +568,37 @@ public:
                     emit styleChanged(m_style);
                 });
         form->addRow(QStringLiteral("滚动条"), m_scrollbarCheck);
+
+        // ===== 窗口大小（宽 / 高，像素） =====
+        m_windowWidthSpin = new QSpinBox(this);
+        m_windowWidthSpin->setRange(480, 3840);
+        m_windowWidthSpin->setValue(qBound(480, m_windowWidth, 3840));
+        connect(m_windowWidthSpin,
+                QOverload<int>::of(&QSpinBox::valueChanged),
+                this,
+                [this](int v) {
+                    v = qBound(480, v, 3840);
+                    if (m_windowWidth != v) {
+                        m_windowWidth = v;
+                        emit windowSizeChanged(m_windowWidth, m_windowHeight);
+                    }
+                });
+        form->addRow(QStringLiteral("窗口宽度"), m_windowWidthSpin);
+
+        m_windowHeightSpin = new QSpinBox(this);
+        m_windowHeightSpin->setRange(600, 2160);
+        m_windowHeightSpin->setValue(qBound(600, m_windowHeight, 2160));
+        connect(m_windowHeightSpin,
+                QOverload<int>::of(&QSpinBox::valueChanged),
+                this,
+                [this](int v) {
+                    v = qBound(600, v, 2160);
+                    if (m_windowHeight != v) {
+                        m_windowHeight = v;
+                        emit windowSizeChanged(m_windowWidth, m_windowHeight);
+                    }
+                });
+        form->addRow(QStringLiteral("窗口高度"), m_windowHeightSpin);
 
         // 历史记录上限
         m_historyLimitSpin = new QSpinBox(this);
@@ -583,7 +622,6 @@ public:
                 });
         form->addRow(QStringLiteral("最近打开上限"), m_recentLimitSpin);
 
-
         // 底部一个“关闭”按钮
         auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
         connect(buttons, &QDialogButtonBox::rejected,
@@ -604,6 +642,7 @@ signals:
     void styleChanged(const ReaderStyle &style);
     void historyLimitChanged(int limit);
     void recentLimitChanged(int limit);
+    void windowSizeChanged(int width, int height);
 
 private:
     static void updateColorButton(QPushButton *btn, const QColor &color)
@@ -624,10 +663,14 @@ private:
     QPushButton *m_fontColorButton       = nullptr;
     QPushButton *m_backgroundColorButton = nullptr;
     QCheckBox   *m_scrollbarCheck        = nullptr;
+    QSpinBox    *m_windowWidthSpin       = nullptr;
+    QSpinBox    *m_windowHeightSpin      = nullptr;
     QSpinBox    *m_historyLimitSpin      = nullptr;
     QSpinBox    *m_recentLimitSpin       = nullptr;
     int          m_historyLimit          = 20;
     int          m_recentLimit           = 20;
+    int          m_windowWidth           = 720;
+    int          m_windowHeight          = 900;
 };
 
 class MainWindow;   // 前向声明
@@ -992,9 +1035,18 @@ MainWindow::MainWindow(QWidget *parent)
     // 保持窗口自身不透明（1.0），背景透明度交给前端样式控制
     setWindowOpacity(1.0);
 
+    QSettings settings("zhiz", "TransparentMdReader");
 
-    resize(720, 900);
+    // 读取上次保存的窗口大小（仅允许通过设置对话框调整）
+    const int storedW = settings.value("window/width", 720).toInt();
+    const int storedH = settings.value("window/height", 900).toInt();
+
+    const int w = qBound(480, storedW, 3840);
+    const int h = qBound(600, storedH, 2160);
+
+    resize(w, h);
     setMinimumSize(480, 600);
+
 
     // 中央容器：只放 WebEngine 区域
     auto *central = new QWidget(this);
@@ -1093,7 +1145,6 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(central);
 
     // 初始化“最后打开目录”：优先用文档目录，其次 home 目录，然后看配置
-    QSettings settings("zhiz", "TransparentMdReader");
     const QString savedDir = settings.value("ui/lastOpenDir").toString();
 
     QString defaultDir =
@@ -1279,7 +1330,13 @@ MainWindow::~MainWindow()
 void MainWindow::openSettingsDialog()
 {
     // 每次点击 Settings 新建一个对话框，关闭后自动 delete
-    auto *dlg = new ReaderSettingsDialog(g_readerStyle, m_historyLimit, m_recentLimit, this);
+    auto *dlg = new ReaderSettingsDialog(
+        g_readerStyle,
+        m_historyLimit,
+        m_recentLimit,
+        width(),      // 当前窗口宽度
+        height(),     // 当前窗口高度
+        this);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
 
     // 实时更新：任何控件变化都会发出 styleChanged
@@ -1289,8 +1346,8 @@ void MainWindow::openSettingsDialog()
                 applyReaderStyle();
 
                 if (m_titleBar) {
-                m_titleBar->applyReaderUiStyle(g_readerStyle);   // 第 3 点会用到，放在一起
-            }
+                    m_titleBar->applyReaderUiStyle(g_readerStyle);
+                }
 
                 // 同步保存到 QSettings，重启后仍然生效
                 QSettings settings("zhiz", "TransparentMdReader");
@@ -1301,18 +1358,38 @@ void MainWindow::openSettingsDialog()
                 settings.setValue("reader/backgroundOpacity", g_readerStyle.backgroundOpacity);
                 settings.setValue("reader/showScrollbar", g_readerStyle.showScrollbar);
             });
+
     connect(dlg, &ReaderSettingsDialog::historyLimitChanged,
             this, [this](int limit) {
                 m_historyLimit = qBound(1, limit, 200);
                 trimHistory();
                 persistHistory();
             });
+
     connect(dlg, &ReaderSettingsDialog::recentLimitChanged,
             this, [this](int limit) {
                 m_recentLimit = qBound(1, limit, 200);
                 QSettings settings("zhiz", "TransparentMdReader");
                 settings.setValue("recent/limit", m_recentLimit);
                 rebuildRecentMenu();
+            });
+
+    // 新增：窗口大小改变时，立即调整窗口并写入 QSettings
+    connect(dlg, &ReaderSettingsDialog::windowSizeChanged,
+            this, [this](int w, int h) {
+                const int minW = 480;
+                const int minH = 600;
+                const int maxW = 3840;
+                const int maxH = 2160;
+
+                const int cw = qBound(minW, w, maxW);
+                const int ch = qBound(minH, h, maxH);
+
+                resize(cw, ch);
+
+                QSettings settings("zhiz", "TransparentMdReader");
+                settings.setValue("window/width",  cw);
+                settings.setValue("window/height", ch);
             });
 
     dlg->show();
