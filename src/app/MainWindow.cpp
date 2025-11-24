@@ -105,6 +105,21 @@ QUrl locateIndexPage()
     return {};
 }
 
+QString locateAppIconPath()
+{
+    QDir dir(QCoreApplication::applicationDirPath());
+    constexpr int kMaxLevels = 8;
+    for (int i = 0; i < kMaxLevels; ++i) {
+        if (dir.exists("resources/icons/app.ico")) {
+            return dir.absoluteFilePath("resources/icons/app.ico");
+        }
+        if (!dir.cdUp()) {
+            break;
+        }
+    }
+    return {};
+}
+
 QString placeholderHtml()
 {
     return QStringLiteral(
@@ -1121,6 +1136,11 @@ MainWindow::MainWindow(QWidget *parent)
     // 保持窗口自身不透明（1.0），背景透明度交给前端样式控制
     setWindowOpacity(1.0);
 
+    // 统一设置主窗口/任务栏图标（共用 resources/icons/app.ico）
+    if (QIcon icon(locateAppIconPath()); !icon.isNull()) {
+        setWindowIcon(icon);
+    }
+
     QSettings settings("zhiz", "TransparentMdReader");
 
     // 读取上次保存的窗口大小（仅允许通过设置对话框调整）
@@ -1789,6 +1809,9 @@ void MainWindow::createSystemTray()
 
     m_trayIcon = new QSystemTrayIcon(this);
     QIcon trayIcon = windowIcon();
+    if (trayIcon.isNull()) {
+        trayIcon = QIcon(locateAppIconPath());
+    }
     if (trayIcon.isNull()) {
         trayIcon = style()->standardIcon(QStyle::SP_FileIcon);
     }
