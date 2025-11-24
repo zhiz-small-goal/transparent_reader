@@ -1720,7 +1720,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
         }
 
         const QString lower = filePath.toLower();
-        if (lower.endsWith(".md") || lower.endsWith(".markdown")) {
+        if (lower.endsWith(".md") || lower.endsWith(".markdown") || lower.endsWith(".txt")) {
             event->acceptProposedAction();
             return;
         }
@@ -1753,7 +1753,7 @@ void MainWindow::dropEvent(QDropEvent *event)
         }
 
         const QString lower = filePath.toLower();
-        if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
+        if (!lower.endsWith(".md") && !lower.endsWith(".markdown") && !lower.endsWith(".txt")) {
             continue;
         }
 
@@ -2063,7 +2063,7 @@ void MainWindow::handleOpenMarkdownUrl(const QUrl &url)
 
     const QString rawPath = url.isLocalFile() ? url.toLocalFile() : url.path();
     const QString lower   = rawPath.toLower();
-    if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
+    if (!lower.endsWith(".md") && !lower.endsWith(".markdown") && !lower.endsWith(".txt")) {
         return;
     }
 
@@ -2182,7 +2182,7 @@ void MainWindow::openMarkdownFileFromDialog()   // NEW
     }
 
     const QString filter =
-        QStringLiteral("Markdown 文件 (*.md *.markdown);;所有文件 (*.*)");
+        QStringLiteral("Markdown/文本文件 (*.md *.markdown *.txt);;所有文件 (*.*)");
 
     const QString path = QFileDialog::getOpenFileName(
         this,

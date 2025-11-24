@@ -5,7 +5,7 @@
 static bool isInternalMarkdown(const QUrl &url)
 {
     const QString path = url.path().toLower();
-    return path.endsWith(".md") || path.endsWith(".markdown");
+    return path.endsWith(".md") || path.endsWith(".markdown") || path.endsWith(".txt");
 }
 
 // NEW: 判断是否为图片链接（本地或远程都按图片处理）
