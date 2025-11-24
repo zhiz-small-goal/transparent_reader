@@ -85,7 +85,7 @@ namespace
 
     // 窗口尺寸的统一下限/上限（像素）
 constexpr int kMinWindowWidth  = 480;
-constexpr int kMinWindowHeight = 600;
+constexpr int kMinWindowHeight = 300;
 constexpr int kMaxWindowWidth  = 3840;
 constexpr int kMaxWindowHeight = 2160;
 
@@ -200,6 +200,7 @@ struct ReaderStyle {
     qreal fontOpacity        = 1.0;                        // 字体透明度 0.0 ~ 1.0
     QColor backgroundColor   = QColor(45, 44, 44);         // 深灰色背景
     qreal  backgroundOpacity = 0.0;                       // 0.0 ~ 1.0
+    qreal  codeBackgroundOpacity = 0.7;                    // 0.0 ~ 1.0，允许完全透明
     bool  showScrollbar      = false;                      // 默认隐藏右侧滚动条
 };
 
@@ -559,6 +560,41 @@ public:
         opacityRow->addWidget(opacityLabel);
         form->addRow(QStringLiteral("背景透明度"), opacityRow);
 
+        // ===== 代码块透明度（颜色固定为默认黑） =====
+        m_codeBgOpacitySlider = new QSlider(Qt::Horizontal, this);
+        m_codeBgOpacitySlider->setRange(0, 100);
+        m_codeBgOpacitySlider->setValue(
+            static_cast<int>(m_style.codeBackgroundOpacity * 100.0));
+
+        auto *codeBgOpacityLabel = new QLabel(this);
+        codeBgOpacityLabel->setMinimumWidth(40);
+
+        auto updateCodeBgOpacityLabel = [this, codeBgOpacityLabel]() {
+            const int v = m_codeBgOpacitySlider->value();
+            codeBgOpacityLabel->setText(
+                QString::number(v) + QStringLiteral("%"));
+        };
+        updateCodeBgOpacityLabel();
+
+        connect(m_codeBgOpacitySlider, &QSlider::valueChanged,
+                this, [this, codeBgOpacityLabel](int v) {
+                    v = qBound(0, v, 100);
+                    {
+                        QSignalBlocker guard(m_codeBgOpacitySlider);
+                        m_codeBgOpacitySlider->setValue(v);
+                    }
+                    m_style.codeBackgroundOpacity = v / 100.0;
+                    codeBgOpacityLabel->setText(
+                        QString::number(v) + QStringLiteral("%"));
+                    emit styleChanged(m_style);
+                });
+
+        auto *codeBgOpacityRow = new QHBoxLayout;
+        codeBgOpacityRow->setContentsMargins(0, 0, 0, 0);
+        codeBgOpacityRow->addWidget(m_codeBgOpacitySlider, 1);
+        codeBgOpacityRow->addWidget(codeBgOpacityLabel);
+        form->addRow(QStringLiteral("代码块透明度"), codeBgOpacityRow);
+
         // 是否显示右侧滚动条
         m_scrollbarCheck = new QCheckBox(QStringLiteral("显示右侧滚动条"), this);
         m_scrollbarCheck->setChecked(m_style.showScrollbar);
@@ -708,6 +744,7 @@ private:
     QSpinBox    *m_fontSizeSpin          = nullptr;
     QSlider     *m_fontOpacitySlider     = nullptr;   // 字体透明度
     QSlider     *m_opacitySlider         = nullptr;   // 背景透明度
+    QSlider     *m_codeBgOpacitySlider   = nullptr;   // 代码块透明度
     QPushButton *m_fontColorButton       = nullptr;
     QPushButton *m_backgroundColorButton = nullptr;
     QCheckBox   *m_scrollbarCheck        = nullptr;
@@ -1245,6 +1282,11 @@ g_readerStyle.fontPointSize =
     if (g_readerStyle.backgroundOpacity < 0.0) g_readerStyle.backgroundOpacity = 0.0;
     if (g_readerStyle.backgroundOpacity > 1.0) g_readerStyle.backgroundOpacity = 1.0;
 
+    g_readerStyle.codeBackgroundOpacity =
+        settings.value("reader/codeBackgroundOpacity", g_readerStyle.codeBackgroundOpacity).toDouble();
+    if (g_readerStyle.codeBackgroundOpacity < 0.0) g_readerStyle.codeBackgroundOpacity = 0.0;
+    if (g_readerStyle.codeBackgroundOpacity > 1.0) g_readerStyle.codeBackgroundOpacity = 1.0;
+
     g_readerStyle.showScrollbar =
         settings.value("reader/showScrollbar", g_readerStyle.showScrollbar).toBool();
 
@@ -1405,6 +1447,7 @@ void MainWindow::openSettingsDialog()
                 settings.setValue("reader/fontOpacity", g_readerStyle.fontOpacity);
                 settings.setValue("reader/backgroundColor", g_readerStyle.backgroundColor.name(QColor::HexRgb));
                 settings.setValue("reader/backgroundOpacity", g_readerStyle.backgroundOpacity);
+                settings.setValue("reader/codeBackgroundOpacity", g_readerStyle.codeBackgroundOpacity);
                 settings.setValue("reader/showScrollbar", g_readerStyle.showScrollbar);
             });
 
@@ -1449,6 +1492,19 @@ void MainWindow::applyReaderStyle()
         QString::number(g_readerStyle.fontPointSize) + QStringLiteral("px");
     const QString fontColorCss =
         colorToCssRgba(g_readerStyle.fontColor, g_readerStyle.fontOpacity);
+    // 代码块背景：颜色固定为黑色，可调透明度；透明时边框也全透明
+    const QColor codeBaseColor(0, 0, 0);
+    const QString codeBgCss =
+        colorToCssRgba(codeBaseColor, g_readerStyle.codeBackgroundOpacity);
+    QString codeBorderCss;
+    if (g_readerStyle.codeBackgroundOpacity <= 0.0001) {
+        codeBorderCss = QStringLiteral("1px solid rgba(0,0,0,0)");
+    } else {
+        const qreal borderAlpha =
+            qBound<qreal>(0.0, 0.18 * g_readerStyle.codeBackgroundOpacity, 1.0);
+        codeBorderCss = QStringLiteral("1px solid %1")
+                            .arg(colorToCssRgba(codeBaseColor, borderAlpha));
+    }
     // 当背景透明度为 0 时，强制使用完全透明色，避免底层残留颜色
     QString bgCss;
     if (g_readerStyle.backgroundOpacity <= 0.0001) {
@@ -1474,7 +1530,7 @@ void MainWindow::applyReaderStyle()
     const QString overflowCss =
         g_readerStyle.showScrollbar ? QStringLiteral("overlay") : QStringLiteral("auto");
 
-    const QString js = QStringLiteral(
+    QString js = QStringLiteral(
         "(function(){"
         "  var fontSize = '%1';"
         "  var fontColor = '%2';"
@@ -1496,7 +1552,9 @@ void MainWindow::applyReaderStyle()
         "                 --md-bg:' + bg + ';"
         "                 --md-border:' + border + ';"
         "                 --md-shadow:' + shadow + ';"
-        "                 --md-fg:' + fontColor + ';}';"
+        "                 --md-fg:' + fontColor + ';"
+        "                 --md-code-bg:%8;"
+        "                 --md-code-border:%9;}';"
 
         // 2) 页面根与常见容器：颜色/字号/背景同时兜底
         "  css += 'html, body, #md-root, .md-root, #root, #app, .markdown-body, .md-content{"
@@ -1532,7 +1590,17 @@ void MainWindow::applyReaderStyle()
 
         "  style.textContent = css;"
         "})();"
-    ).arg(fontSizeCss, fontColorCss, bgCss, borderCss, shadowCss, scrollbarWidthCss, overflowCss);
+    );
+
+    js = js.arg(fontSizeCss)
+           .arg(fontColorCss)
+           .arg(bgCss)
+           .arg(borderCss)
+           .arg(shadowCss)
+           .arg(scrollbarWidthCss)
+           .arg(overflowCss)
+           .arg(codeBgCss)
+           .arg(codeBorderCss);
 
     m_view->page()->runJavaScript(js);
 }
