@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>TransparentMdReader 使用说明</title>
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; line-height: 1.6; max-width: 960px; margin: 40px auto; padding: 0 18px; color: #222; }
+    h1, h2 { color: #0b6aa2; }
+    code { background: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+    .box { background:#f8fbff; border:1px solid #d7e8f5; border-radius:8px; padding:12px 14px; }
+  </style>
+</head>
+<body>
+  <h1>TransparentMdReader 使用说明</h1>
+  <p>TransparentMdReader 是一款透明的 Markdown 阅读器，可置顶、无边框，支持记忆阅读进度和最近文件。</p>
+
+  <h2>安装与启动</h2>
+  <ol>
+    <li>解压应用包，保持目录结构不变。</li>
+    <li>确认 <code>resources/web</code> 目录下有 <code>index.html</code>、<code>main.js</code>、<code>style.css</code>、<code>markdown-it.min.js</code>。</li>
+    <li>将图标放在 <code>resources/icons/app.ico</code>（任务栏与托盘共用）。</li>
+    <li>运行 <code>TransparentMdReader.exe</code>。</li>
+  </ol>
+
+  <h2>基础操作</h2>
+  <ul>
+    <li><strong>打开文件：</strong>按 Ctrl+O，或将 Markdown 文件拖拽到窗口；托盘菜单也可打开。</li>
+    <li><strong>阅读控制：</strong>鼠标滚轮或右键翻页（锁定状态下可配置）；自动记忆滚动位置。</li>
+    <li><strong>锁定/解锁：</strong>点击标题栏锁图标；按住 Ctrl 临时解锁。</li>
+    <li><strong>托盘：</strong>单击/双击托盘图标切换显示/隐藏；最近列表可快速打开。</li>
+  </ul>
+
+  <h2>设置</h2>
+  <div class="box">
+    <p><strong>阅读样式：</strong>字号、字体颜色/透明度、背景透明度、代码块透明度、滚动条显示。</p>
+    <p><strong>窗口：</strong>自定义宽高（有最小值限制）。</p>
+    <p><strong>历史与最近：</strong>调整历史记录和最近文件上限。</p>
+  </div>
+
+  <h2>常见问题</h2>
+  <ul>
+    <li>打开后空白或样式异常：检查 <code>resources/web</code> 是否完整。</li>
+    <li>任务栏/托盘无图标：确认 <code>resources/icons/app.ico</code> 存在。</li>
+    <li>无法滚动或翻页：检查是否处于锁定状态。</li>
+  </ul>
+</body>
+</html>
