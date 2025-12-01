@@ -319,6 +319,21 @@
     return true;
   };
 
+  // 供 C++ 调用：按比例滚动到指定位置（0 顶部，1 底部）
+  window.scrollToRatio = function (ratio) {
+    const r = Math.max(0, Math.min(1, Number(ratio)));
+    const { el, max } = pickScrollContainer();
+    const target = Math.round(max * r);
+
+    if (el === window) {
+      window.scrollTo(0, target);
+      return Math.abs(window.scrollY - target) <= 2;
+    }
+
+    el.scrollTop = target;
+    return Math.abs(el.scrollTop - target) <= 2;
+  };
+
 
   // ===============================
   // C++ 调用的入口

@@ -822,7 +822,12 @@ public:
             QStringLiteral("当前已锁定（鼠标穿透）。按住 Ctrl 可临时解锁，或点击此按钮解除锁定。"));
         layout->addWidget(m_lockButton);
 
-        // 一屏翻页按钮（上一屏 / 下一屏）
+        // 一屏翻页 / 跳转首尾
+        m_topButton = new QToolButton(this);
+        m_topButton->setText(QStringLiteral("顶部"));
+        m_topButton->setToolTip(QStringLiteral("直接跳到顶部"));
+        layout->addWidget(m_topButton);
+
         m_prevPageButton = new QToolButton(this);
         m_prevPageButton->setText(QStringLiteral("▲"));
         m_prevPageButton->setToolTip(QStringLiteral("上一屏（向上翻页）"));
@@ -832,6 +837,11 @@ public:
         m_nextPageButton->setText(QStringLiteral("▼"));
         m_nextPageButton->setToolTip(QStringLiteral("下一屏（向下翻页）"));
         layout->addWidget(m_nextPageButton);
+
+        m_bottomButton = new QToolButton(this);
+        m_bottomButton->setText(QStringLiteral("底部"));
+        m_bottomButton->setToolTip(QStringLiteral("直接跳到底部"));
+        layout->addWidget(m_bottomButton);
 
         // Settings 按钮
         m_settingsButton = new QToolButton(this);
@@ -858,8 +868,10 @@ public:
         enlargeButton(m_dragButton);
         enlargeButton(m_prevDocButton);
         enlargeButton(m_nextDocButton);
+        enlargeButton(m_topButton);
         enlargeButton(m_prevPageButton);
         enlargeButton(m_nextPageButton);
+        enlargeButton(m_bottomButton);
         enlargeButton(m_lockButton);
         enlargeButton(m_settingsButton);
         enlargeButton(m_closeButton);
@@ -898,7 +910,7 @@ public:
         });
 
 
-        // 翻页按钮：始终可用（不受锁定影响）
+        // 翻页/跳转按钮：始终可用（不受锁定影响）
         connect(m_prevPageButton, &QToolButton::clicked, this, [this]() {
             if (m_mainWindow) {
                 m_mainWindow->scrollPageUp();
@@ -907,6 +919,16 @@ public:
         connect(m_nextPageButton, &QToolButton::clicked, this, [this]() {
             if (m_mainWindow) {
                 m_mainWindow->scrollPageDown();
+            }
+        });
+        connect(m_topButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->scrollToTop();
+            }
+        });
+        connect(m_bottomButton, &QToolButton::clicked, this, [this]() {
+            if (m_mainWindow) {
+                m_mainWindow->scrollToBottom();
             }
         });
 
@@ -1003,9 +1025,11 @@ public:
 
 private:
     MainWindow  *m_mainWindow      = nullptr;
+    QToolButton *m_topButton       = nullptr;
     QToolButton *m_dragButton      = nullptr;
     QToolButton *m_prevPageButton  = nullptr;
     QToolButton *m_nextPageButton  = nullptr;
+    QToolButton *m_bottomButton    = nullptr;
     QToolButton *m_prevDocButton   = nullptr;
     QToolButton *m_nextDocButton   = nullptr;
     QToolButton *m_lockButton      = nullptr;
@@ -1347,18 +1371,14 @@ g_readerStyle.fontPointSize =
                     }
 
                     if (!m_currentFilePath.isEmpty()) {
-                        double ratio = 0.0;
-                        if (m_pendingScrollRatio > 0.001) {
-                            ratio = m_pendingScrollRatio;
-                        } else {
+                        double ratio = m_pendingScrollRatio;
+                        if (ratio < 0.0) {
                             ratio = StateDbManager::instance().loadScroll(m_currentFilePath);
                         }
 
-                        m_pendingScrollRatio = 0.0;
+                        m_pendingScrollRatio = -1.0;
                         m_lastScrollRatio    = ratio;
-                        if (m_lastScrollRatio > 0.001) {
-                            applyScrollRatio(m_lastScrollRatio);
-                        }
+                        applyScrollRatio(m_lastScrollRatio);
                     }
 
                     // ????????????????
@@ -2263,6 +2283,22 @@ void MainWindow::scrollPageDown()  // NEW
 )JS");
     m_view->page()->runJavaScript(js);
 }
+
+void MainWindow::scrollToTop()
+{
+    if (!m_view || !m_view->page()) {
+        return;
+    }
+    m_view->page()->runJavaScript(QStringLiteral("window.scrollToRatio(0);"));
+}
+
+void MainWindow::scrollToBottom()
+{
+    if (!m_view || !m_view->page()) {
+        return;
+    }
+    m_view->page()->runJavaScript(QStringLiteral("window.scrollToRatio(1);"));
+}
 // 文件：src/app/MainWindow.cpp
 // 作用：在未锁定状态下实现：
 //   - 左键拖动整窗
@@ -2438,9 +2474,7 @@ const QString markdown = in.readAll();
     applyReaderStyle();
 
     m_lastScrollRatio = StateDbManager::instance().loadScroll(m_currentFilePath);
-    if (m_lastScrollRatio > 0.001) {
-        applyScrollRatio(m_lastScrollRatio);
-    }
+    applyScrollRatio(m_lastScrollRatio);
 
     StateDbManager::instance().recordOpen(
         m_currentFilePath,

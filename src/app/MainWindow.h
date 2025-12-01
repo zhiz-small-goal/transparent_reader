@@ -44,6 +44,8 @@ public:
     // 由标题栏翻页按钮调用：滚动一屏（向上/向下）
     void scrollPageUp();    // PageUp
     void scrollPageDown();  // PageDown
+    void scrollToTop();
+    void scrollToBottom();
 
     // 打开“阅读设置”对话框（非模态，实时预览）
     void openSettingsDialog();
@@ -130,7 +132,7 @@ private:
     double  m_lastScrollRatio   = 0.0;
     bool    m_restoringScroll   = false;
     bool    m_openingFile       = false;
-    double  m_pendingScrollRatio = 0.0;
+    double  m_pendingScrollRatio = -1.0;  // <0 表示无挂起滚动
     int     m_historyLimit      = 20;
     int     m_recentLimit       = 20;
     bool    m_exiting           = false;
