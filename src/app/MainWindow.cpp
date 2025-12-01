@@ -2529,12 +2529,14 @@ void MainWindow::trimHistory()
 
 void MainWindow::applyScrollRatio(double ratio)
 {
-    if (!m_view || !m_view->page() || ratio <= 0.0) {
+    if (!m_view || !m_view->page()) {
         return;
     }
 
     double clamped = ratio;
-    if (clamped > 1.0) {
+    if (clamped < 0.0) {
+        clamped = 0.0;
+    } else if (clamped > 1.0) {
         clamped = 1.0;
     }
 
